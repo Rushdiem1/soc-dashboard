@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programme National SOC & CERT-CG — République du Congo</title>
+<style>
+  :root{
+    --navy:#0B1A2B;
+    --panel:#122236;
+    --panel-2:#0E1D2F;
+    --line:#1E3450;
+    --green:#3ED598;
+    --green-dim:#1F5A44;
+    --gold:#D4A72C;
+    --red:#C6444C;
+    --text:#EAF2F0;
+    --muted:#7E97A3;
+    --muted-2:#5A6E78;
+    --mono: 'Courier New', Courier, monospace;
+    --serif: 'Cambria', 'Times New Roman', serif;
+    --sans: 'Calibri', Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--navy);color:var(--text);font-family:var(--sans);}
+  a{color:inherit;}
+  .app{display:flex;min-height:100vh;}
+
+  /* SIDEBAR */
+  .sidebar{
+    width:270px; flex-shrink:0; background:var(--panel-2);
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column; padding:28px 0 20px 0;
+  }
+  .brand{padding:0 24px 22px 24px; border-bottom:1px solid var(--line); margin-bottom:14px;}
+  .brand .flagbar{display:flex; gap:4px; margin-bottom:14px;}
+  .flagbar span{width:22px;height:6px;border-radius:1px;}
+  .flagbar .g{background:#00923F;} .flagbar .y{background:#FFD100;} .flagbar .r{background:#DC241F;}
+  .brand h1{font-family:var(--serif); font-size:16px; line-height:1.35; margin:0 0 6px 0; letter-spacing:.2px;}
+  .brand p{font-size:11px; color:var(--muted); margin:0; letter-spacing:.5px; text-transform:uppercase;}
+
+  nav.navlist{flex:1; padding:10px 12px; overflow-y:auto;}
+  .navitem{
+    display:none; align-items:baseline; gap:10px; width:100%;
+    background:none; border:none; color:var(--muted);
+    padding:11px 12px; margin-bottom:2px; text-align:left; cursor:pointer;
+    font-family:var(--sans); font-size:13.5px; border-radius:3px;
+    transition: background .15s, color .15s;
+  }
+  .navitem.live{
+    display:flex;
+  }
+  .navitem .num{font-family:var(--mono); font-size:11px; color:var(--muted-2); min-width:20px;}
+  .navitem:hover{background:var(--panel); color:var(--text);}
+  .navitem.active{background:var(--panel); color:var(--text); box-shadow: inset 3px 0 0 var(--green);}
+  .navitem.active .num{color:var(--green);}
+  .navitem.cta{margin-top:10px; border-top:1px solid var(--line); padding-top:14px; color:var(--gold);}
+  .navitem.cta .num{color:var(--gold);}
+
+  .city-container{margin-top:8px; margin-left:10px;}
+  .city-toggle{
+    display:flex; align-items:center; gap:8px; width:100%;
+    background:none; border:none; color:var(--text); padding:8px 10px;
+    font-family:var(--sans); font-size:13px; font-weight:bold; text-align:left;
+    cursor:pointer; border-radius:3px; transition: background .15s, color .15s;
+  }
+  .city-toggle:hover{background:var(--panel);}
+  .city-toggle .chev{display:inline-block; transition:transform .15s;}
+  .city-toggle.expanded .chev{transform:rotate(90deg);}
+  .arrondissements{
+    overflow:hidden; transition:max-height .3s ease;
+    padding-left:8px; border-left:2px solid var(--line); margin-left:6px;
+    max-height:0;
+  }
+  .arrondissements.open{max-height:500px;}
+  .arrondissement{
+    font-size:12px; color:var(--muted); padding:6px 10px; line-height:1.4;
+  }
+
+  /* Dashboard Styles */
+  .topbar-dash{padding:0 0 20px 0; border-bottom:1px solid var(--line); margin-bottom:20px;}
+  .title-dash{font-family:var(--serif); font-size:24px; margin:0; color:var(--text);}
+  
+  .statgrid-dash{display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:24px;}
+  .statcard-dash{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:16px; display:flex; gap:12px;}
+  .statcard-icon{width:48px; height:48px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;}
+  .statcard-icon.shield{background:rgba(198,68,76,0.1);}
+  .statcard-icon.alert{background:rgba(212,167,44,0.1);}
+  .statcard-icon.success{background:rgba(62,213,152,0.1);}
+  .statcard-icon.network{background:rgba(62,165,213,0.1);}
+  .statcard-icon.org{background:rgba(155,89,182,0.1);}
+  .statcard-content{flex:1;}
+  .statcard-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;}
+  .statcard-number{font-size:20px; font-weight:bold; color:var(--text); margin-bottom:4px;}
+  .statcard-change{font-size:11px; color:var(--green);}
+
+  .dashboard-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:24px;}
+  .dashboard-panel{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:20px;}
+  .panel-title{font-family:var(--serif); font-size:14px; margin:0 0 16px 0; color:var(--text); display:flex; justify-content:space-between; align-items:center;}
+  .view-all{font-size:12px; color:var(--green); text-decoration:none; transition:color .15s;}
+  .view-all:hover{color:#5EE8AC;}
+
+  .threat-map{margin-bottom:16px; position:relative;}
+  .map-placeholder{background:var(--panel-2); border:1px solid var(--line); border-radius:4px; padding:40px; text-align:center; color:var(--muted); font-size:14px; margin-bottom:12px;}
+  .threat-legend{display:flex; gap:16px; margin-bottom:12px;}
+  .legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);}
+  .threat-dot{width:10px; height:10px; border-radius:50%;}
+  .threat-dot.critical{background:#C6444C;}
+  .threat-dot.high{background:#D4A72C;}
+  .threat-dot.medium{background:#FFA500;}
+  .threat-dot.low{background:#3ED598;}
+
+  .threat-locations{display:flex; flex-direction:column; gap:8px;}
+  .threat-location{display:flex; align-items:center; gap:8px; padding:8px 0; font-size:12px; border-bottom:1px solid var(--line);}
+  .threat-location:last-child{border-bottom:none;}
+  .threat-location .dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .threat-location b{flex:1; color:var(--text);}
+  .threat-location span:last-child{color:var(--muted);}
+
+  .incidents-list{display:flex; flex-direction:column; gap:2px;}
+  .incident-row{display:flex; align-items:flex-start; gap:10px; padding:10px; border-radius:4px; font-size:12px; transition:background .15s; cursor:pointer;}
+  .incident-row:hover{background:var(--panel-2);}
+  .incident-row.critical{border-left:3px solid #C6444C;}
+  .incident-row.high{border-left:3px solid #D4A72C;}
+  .incident-row.medium{border-left:3px solid #FFA500;}
+  .incident-row.low{border-left:3px solid #3ED598;}
+  .incident-icon{font-size:16px; flex-shrink:0;}
+  .incident-content{flex:1; min-width:0;}
+  .incident-title{font-weight:bold; color:var(--text); margin-bottom:2px;}
+  .incident-meta{color:var(--muted); font-size:11px;}
+  .incident-time{color:var(--muted); font-size:11px; flex-shrink:0;}
+
+  .chart-placeholder{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:center;}
+  .pie-chart{position:relative; width:120px; height:120px; background:conic-gradient(#C6444C 0deg 115deg, #D4A72C 115deg 172deg, #4D9EFF 172deg 220deg); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto;}
+  .pie-label{position:absolute; width:80px; height:80px; background:var(--panel); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:11px; text-align:center; color:var(--muted); font-weight:bold;}
+  .chart-legend{display:flex; flex-direction:column; gap:8px;}
+  .chart-item{display:flex; align-items:center; gap:8px; font-size:12px;}
+  .chart-item .color{width:12px; height:12px; border-radius:2px;}
+  .chart-item .color.malware{background:#C6444C;}
+  .chart-item .color.phishing{background:#D4A72C;}
+  .chart-item .color.ransomware{background:#4D9EFF;}
+  .chart-item .color.ddos{background:#7E97A3;}
+  .chart-item .color.access{background:#8E7FCC;}
+  .chart-item .color.web{background:#3ED598;}
+  .chart-item .color.other{background:#5A6E78;}
+
+  .sector-posture{display:flex; flex-direction:column; gap:10px;}
+  .sector-row{display:grid; grid-template-columns:80px 1fr 50px auto; gap:10px; align-items:center; font-size:12px; padding:8px; border-bottom:1px solid var(--line);}
+  .sector-row:last-child{border-bottom:none;}
+  .sector-name{color:var(--text); font-weight:500;}
+  .sector-gauge{background:var(--panel-2); border-radius:4px; height:8px; overflow:hidden;}
+  .gauge-fill{background:var(--green); height:100%; transition:width .3s;}
+  .sector-pct{color:var(--text); font-weight:bold; text-align:right;}
+  .sector-status{font-size:10px; padding:2px 6px; border-radius:2px; font-weight:bold;}
+  .sector-status.healthy{background:rgba(62,213,152,0.2); color:var(--green);}
+  .sector-status.good{background:rgba(62,165,213,0.2); color:#4D9EFF;}
+  .sector-status.fair{background:rgba(212,167,44,0.2); color:var(--gold);}
+
+  .response-workflow{display:flex; justify-content:space-between; align-items:center; gap:0;}
+  .response-step{display:flex; flex-direction:column; align-items:center; gap:6px; font-size:12px; flex:1;}
+  .step-icon{width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; background:var(--panel-2);}
+  .step-icon.detect{background:rgba(198,68,76,0.2);}
+  .step-icon.analyze{background:rgba(212,167,44,0.2);}
+  .step-icon.contain{background:rgba(75,158,255,0.2);}
+  .step-icon.eradicate{background:rgba(155,89,182,0.2);}
+  .step-icon.recover{background:rgba(62,213,152,0.2);}
+  .step-label{font-weight:bold; color:var(--text);}
+  .step-count{font-size:11px; color:var(--muted);}
+  .step-arrow{color:var(--muted); font-size:14px;}
+  .response-step:last-child .step-arrow{display:none;}
+
+  .key-metrics{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+  .metric{background:var(--panel-2); border-radius:4px; padding:12px; text-align:center;}
+  .metric-label{font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:6px;}
+  .metric-value{font-size:18px; font-weight:bold; color:var(--text); margin-bottom:4px;}
+  .metric-change{font-size:11px; color:var(--green);}
+
+  .threat-map-world{background:var(--panel-2); border:1px solid var(--line); border-radius:4px; padding:40px; text-align:center; color:var(--muted); font-size:14px; margin-bottom:12px;}
+  .map-placeholder-world{font-size:14px; color:var(--muted);}
+
+  .threat-sources{padding-top:12px; border-top:1px solid var(--line);}
+  .source-item{display:flex; align-items:center; gap:10px; padding:8px 0; font-size:12px;}
+  .source-item .flag{font-size:14px;}
+  .source-item span:nth-child(3){margin-left:auto; color:var(--muted);}
+
+  .live-feed{display:flex; flex-direction:column; gap:10px;}
+  .feed-item{display:flex; align-items:center; gap:10px; padding:10px; background:var(--panel-2); border-radius:4px; font-size:12px;}
+  .feed-logo{width:32px; height:32px; background:var(--green); color:var(--navy); font-size:10px; font-weight:bold; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .feed-content{flex:1; min-width:0;}
+  .feed-content b{color:var(--text); display:block; margin-bottom:2px;}
+  .feed-content span{color:var(--muted); font-size:11px;}
+  .feed-time{color:var(--muted); font-size:11px; flex-shrink:0;}
+
+  .quick-actions{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:24px; padding-top:24px; border-top:1px solid var(--line);}
+  .action-btn{display:flex; flex-direction:column; align-items:center; gap:8px; background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:16px 12px; color:var(--text); font-family:var(--sans); font-size:12px; font-weight:bold; cursor:pointer; transition:all .15s;}
+  .action-btn:hover{background:var(--panel); border-color:var(--green);}
+  .action-btn span{font-size:20px;}
+
+  @media (max-width:1200px){
+    .statgrid-dash{grid-template-columns:repeat(3,1fr);}
+    .dashboard-grid{grid-template-columns:1fr;}
+    .key-metrics{grid-template-columns:repeat(2,1fr);}
+    .quick-actions{grid-template-columns:repeat(2,1fr);}
+  }
+
+  @media (max-width:900px){
+    .statgrid-dash{grid-template-columns:repeat(2,1fr);}
+  }
+  .sidebar-foot{padding:16px 24px 0 24px; border-top:1px solid var(--line); margin-top:10px;}
+  .statuspill{display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px; color:var(--green);}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green); box-shadow:0 0 0 0 rgba(62,213,152,.6); animation:pulse 2s infinite;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(62,213,152,.55);}
+    70%{box-shadow:0 0 0 6px rgba(62,213,152,0);}
+    100%{box-shadow:0 0 0 0 rgba(62,213,152,0);}
+  }
+  .clock{font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:6px;}
+
+  /* MAIN */
+  .main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px; border-bottom:1px solid var(--line); background:var(--navy);
+  }
+  .topbar .crumb{font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.5px;}
+  .topbar .crumb b{color:var(--text);}
+  .topbar .badge{font-family:var(--mono); font-size:11px; color:var(--green); border:1px solid var(--green-dim); padding:4px 10px; border-radius:2px; letter-spacing:.5px;}
+
+  .content{flex:1; padding:24px 40px 60px 40px; max-width:none; width:100%;}
+  .panel{display:none;}
+  .panel.active{display:block; animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .eyebrow{font-family:var(--mono); font-size:12px; color:var(--gold); letter-spacing:1.5px; margin-bottom:10px;}
+  h2.title{font-family:var(--serif); font-size:30px; line-height:1.25; margin:0 0 26px 0; max-width:760px; font-weight:700;}
+  p.lede{color:var(--muted); font-size:14.5px; line-height:1.7; max-width:700px; margin:-10px 0 28px 0;}
+
+  /* stat cards */
+  .statgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:8px;}
+  .statcard{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:20px 18px;}
+  .statcard .num{font-family:var(--mono); font-size:26px; color:var(--green); font-weight:700; margin-bottom:8px;}
+  .statcard.warn .num{color:var(--red);}
+  .statcard .lbl{font-size:12px; color:var(--muted); line-height:1.5;}
+
+  /* two column */
+  .cols2{display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:10px;}
+  .block h3{font-family:var(--serif); font-size:16px; margin:0 0 14px 0; display:flex; align-items:center; gap:9px;}
+  .block h3 .sq{width:9px;height:9px; background:var(--green); flex-shrink:0;}
+  .block.gap h3 .sq{background:var(--red);}
+  ul.marklist{list-style:none; margin:0; padding:0;}
+  ul.marklist li{display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px; line-height:1.55; color:var(--text);}
+  ul.marklist li .sq{width:6px;height:6px; background:var(--green); margin-top:6px; flex-shrink:0;}
+  .block.gap ul.marklist li .sq{background:var(--red);}
+  ul.marklist li:last-child{border-bottom:none;}
+
+  /* grid of 22 boxes */
+  .csirt-grid{display:grid; grid-template-columns:repeat(11,1fr); gap:6px; max-width:420px; margin:18px 0 8px 0;}
+  .csirt-grid .box{aspect-ratio:1; background:var(--panel); border:1px solid var(--line); border-radius:2px;}
+  .csirt-grid .box.on{background:var(--green); border-color:var(--green);}
+  .csirt-note{font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:4px;}
+
+  /* vision pillars */
+  .pillargrid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:22px;}
+  .pillar{background:var(--panel); border:1px solid var(--line); padding:20px; border-radius:4px;}
+  .pillar .k{font-family:var(--mono); font-size:11px; color:var(--gold); letter-spacing:.5px; margin-bottom:10px;}
+  .pillar h4{font-family:var(--serif); font-size:15px; margin:0 0 8px 0;}
+  .pillar p{font-size:12.5px; color:var(--muted); line-height:1.6; margin:0;}
+  .visionstate{background:var(--panel); border:1px solid var(--green-dim); border-left:3px solid var(--green); padding:20px 22px; border-radius:4px; font-size:14px; line-height:1.7; margin-bottom:6px;}
+
+  /* architecture */
+  .archgrid{display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:8px;}
+  .archcol{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:22px;}
+  .archcol h3{font-family:var(--serif); font-size:16px; margin:0 0 16px 0;}
+  .tier{display:flex; gap:14px; padding:12px 0; border-bottom:1px solid var(--line);}
+  .tier:last-child{border-bottom:none;}
+  .tier .tag{font-family:var(--mono); font-size:10.5px; color:var(--navy); background:var(--green); padding:3px 7px; border-radius:2px; height:16px; flex-shrink:0;}
+  .tier .tx b{display:block; font-size:13px; margin-bottom:2px;}
+  .tier .tx span{font-size:12px; color:var(--muted); line-height:1.5;}
+
+  /* roadmap */
+  .timeline{margin-top:20px;}
+  .phase{border:1px solid var(--line); border-radius:4px; margin-bottom:12px; background:var(--panel); overflow:hidden;}
+  .phase-head{display:flex; align-items:center; justify-content:space-between; padding:18px 22px; cursor:pointer;}
+  .phase-head .ph-l{display:flex; align-items:center; gap:16px;}
+  .phase-head .pnum{font-family:var(--mono); font-size:20px; color:var(--gold); font-weight:700;}
+  .phase-head .ptxt b{display:block; font-size:14.5px;}
+  .phase-head .ptxt span{font-size:12px; color:var(--muted); font-family:var(--mono);}
+  .phase-head .chev{color:var(--muted); font-family:var(--mono); transition:transform .2s;}
+  .phase.open .chev{transform:rotate(90deg);}
+  .phase-body{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+  .phase-body ul{list-style:none; margin:0; padding:0 22px 20px 22px;}
+  .phase-body li{display:flex; gap:10px; padding:7px 0; font-size:13px; color:var(--text); border-top:1px solid var(--line);}
+  .phase-body li:first-child{border-top:none;}
+  .phase-body li .sq{width:6px;height:6px;background:var(--green);margin-top:6px;flex-shrink:0;}
+
+  /* positioning */
+  .posgrid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px;}
+  .poscard{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:20px 22px;}
+  .poscard .k{font-family:var(--mono); font-size:11px; color:var(--gold); margin-bottom:8px; letter-spacing:.5px;}
+  .poscard h4{font-family:var(--serif); font-size:14.5px; margin:0 0 8px 0;}
+  .poscard p{font-size:12.5px; color:var(--muted); line-height:1.6; margin:0;}
+
+  /* kpi table */
+  table.kpi{width:100%; border-collapse:collapse; margin-top:14px; font-size:13px;}
+  table.kpi th{text-align:left; font-family:var(--mono); font-size:11px; color:var(--gold); text-transform:uppercase; letter-spacing:.5px; padding:10px 14px; border-bottom:1px solid var(--line);}
+  table.kpi td{padding:14px 14px; border-bottom:1px solid var(--line); vertical-align:top; color:var(--text);}
+  table.kpi tr:hover td{background:var(--panel);}
+  table.kpi td.m12, table.kpi td.m24{font-family:var(--mono); font-size:12px; color:var(--muted);}
+  table.kpi td.m24{color:var(--green);}
+
+  /* governance org chart */
+  .org{display:flex; flex-direction:column; align-items:center; margin-top:24px;}
+  .orgbox{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:14px 20px; text-align:center; min-width:260px;}
+  .orgbox b{display:block; font-size:13.5px; margin-bottom:3px;}
+  .orgbox span{font-size:11px; color:var(--muted);}
+  .orgbox.top{border-color:var(--gold);}
+  .orgbox.top b{color:var(--gold);}
+  .connector{width:1px; height:26px; background:var(--line);}
+  .orgrow{display:flex; gap:22px; margin-top:0;}
+  .orgrow .orgbox{min-width:220px;}
+  .orgdesc{font-size:11.5px; color:var(--muted-2); margin-top:8px; line-height:1.5; max-width:220px;}
+  .orgnote{margin-top:30px; font-size:13px; color:var(--gold); font-style:italic; text-align:center; max-width:520px; line-height:1.6;}
+
+  /* profile */
+  .profile-top{display:flex; gap:28px; margin-top:8px; margin-bottom:30px;}
+  .profile-id{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:22px; flex:1;}
+  .profile-id h3{font-family:var(--serif); font-size:18px; margin:0 0 4px 0;}
+  .profile-id .role{font-size:12.5px; color:var(--green); font-family:var(--mono); margin-bottom:14px;}
+  .profile-id p{font-size:12.5px; color:var(--muted); line-height:1.6; margin:0;}
+  .steps{margin-top:4px;}
+  .step{display:flex; gap:16px; padding:14px 0; border-top:1px solid var(--line);}
+  .step:first-child{border-top:none;}
+  .step .yr{font-family:var(--mono); font-size:11px; color:var(--muted-2); min-width:26px; margin-top:2px;}
+  .step b{display:block; font-size:13.5px;}
+  .step span{font-size:12px; color:var(--muted);}
+  .tagrow{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
+  .tag{font-family:var(--mono); font-size:11px; color:var(--text); background:var(--panel-2); border:1px solid var(--line); padding:5px 10px; border-radius:2px;}
+
+  /* next steps */
+  .cta-box{background:var(--panel); border:1px solid var(--green-dim); border-left:3px solid var(--green); border-radius:4px; padding:30px 32px; margin-top:10px;}
+  .cta-box h3{font-family:var(--serif); font-size:20px; margin:0 0 18px 0;}
+  .cta-box ol{margin:0; padding:0; list-style:none; counter-reset:step;}
+  .cta-box li{counter-increment:step; display:flex; gap:14px; padding:12px 0; border-top:1px solid var(--line); font-size:14px;}
+  .cta-box li:first-child{border-top:none;}
+  .cta-box li:before{content:counter(step); font-family:var(--mono); color:var(--gold); font-weight:700; min-width:20px;}
+  .cta-sign{margin-top:24px; padding-top:18px; border-top:1px solid var(--line); font-size:13px; color:var(--muted);}
+  .cta-sign b{color:var(--text);}
+
+  .footer{padding:20px 40px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px; color:var(--muted-2); display:flex; justify-content:space-between;}
+
+  /* LIVE SOC SIMULATION */
+  .navitem.live{color:var(--red); margin-bottom:10px; border-bottom:1px solid var(--line); padding-bottom:14px; border-radius:0;}
+  .navitem.live.active{background:var(--panel); box-shadow: inset 3px 0 0 var(--red);}
+  .livedot{width:7px;height:7px;border-radius:50%;background:var(--red); flex-shrink:0; animation:pulse-red 1.6s infinite;}
+  @keyframes pulse-red{0%{box-shadow:0 0 0 0 rgba(198,68,76,.6);}70%{box-shadow:0 0 0 6px rgba(198,68,76,0);}100%{box-shadow:0 0 0 0 rgba(198,68,76,0);}}
+
+  .simbanner{display:flex; align-items:center; gap:10px; background:var(--panel-2); border:1px solid var(--red); border-radius:4px; padding:10px 16px; margin-bottom:26px; font-family:var(--mono); font-size:11.5px; color:var(--red); letter-spacing:.3px;}
+  .simbanner b{color:var(--red);}
+
+  .livegrid{display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:26px;}
+  .livecard{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:16px 14px;}
+  .livecard .num{font-family:var(--mono); font-size:22px; font-weight:700; color:var(--green); margin-bottom:6px;}
+  .livecard.red .num{color:var(--red);}
+  .livecard.gold .num{color:var(--gold);}
+  .livecard .lbl{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; line-height:1.4;}
+
+  .livecols{display:grid; grid-template-columns:1.3fr 1fr; gap:20px; margin-bottom:24px;}
+  .livepanel{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:18px 20px;}
+  .livepanel h3{font-family:var(--serif); font-size:14.5px; margin:0 0 14px 0; display:flex; align-items:center; justify-content:space-between;}
+  .livepanel h3 .liveflag{font-family:var(--mono); font-size:9.5px; color:var(--red); border:1px solid var(--red); padding:2px 6px; border-radius:2px; letter-spacing:.5px;}
+
+  .feed{max-height:340px; overflow-y:auto; font-family:var(--mono); font-size:11.5px;}
+  .feed-row{display:grid; grid-template-columns:60px 62px 1fr 90px; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); align-items:baseline;}
+  .feed-row:first-child{animation:rowin .4s ease;}
+  @keyframes rowin{from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);}}
+  .feed-row .t{color:var(--muted-2);}
+  .feed-row .sev{padding:1px 6px; border-radius:2px; font-size:10px; text-align:center; height:16px;}
+  .sev-critical{background:var(--red); color:#fff;}
+  .sev-eleve{background:#7A3A2E; color:#FFD9CE;}
+  .sev-moyen{background:var(--gold); color:var(--navy);}
+  .sev-faible{background:var(--green-dim); color:var(--green);}
+  .feed-row .desc{color:var(--text); font-family:var(--sans); font-size:12px;}
+  .feed-row .src{color:var(--muted); text-align:right;}
+
+  .gaugewrap{margin-bottom:16px;}
+  .gaugewrap .glbl{display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:6px;}
+  .gaugewrap .glbl b{color:var(--text); font-family:var(--mono);}
+  .gaugetrack{height:8px; background:var(--panel-2); border-radius:4px; overflow:hidden; border:1px solid var(--line);}
+  .gaugefill{height:100%; background:var(--green); border-radius:4px; transition:width .8s ease; width:0%;}
+  .gaugefill.gold{background:var(--gold);}
+  .gaugefill.red{background:var(--red);}
+
+  .sectorbar{margin-bottom:12px;}
+  .sectorbar .slbl{display:flex; justify-content:space-between; font-size:12px; color:var(--text); margin-bottom:5px;}
+  .sectorbar .slbl span{font-family:var(--mono); color:var(--muted);}
+  .sectortrack{height:6px; background:var(--panel-2); border-radius:3px; overflow:hidden;}
+  .sectorfill{height:100%; background:var(--gold); border-radius:3px;}
+
+  .citygrid{display:grid; grid-template-columns:1fr; gap:10px;}
+  .cityrow{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
+  .cityrow:last-child{border-bottom:none;}
+  .cityrow .cname{font-size:13px;}
+  .cityrow .cname span{display:block; font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:2px;}
+  .cityrow .cpct{font-family:var(--mono); font-size:14px; color:var(--green); font-weight:700;}
+
+  .intelrow{display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:12px;}
+  .intelrow:last-child{border-bottom:none;}
+  .intelrow .ip{font-family:var(--mono); color:var(--gold); min-width:118px; flex-shrink:0;}
+  .intelrow .meta{color:var(--muted); line-height:1.5;}
+  .intelrow .meta b{color:var(--text); font-weight:normal;}
+
+  .vulnrow{display:grid; grid-template-columns:52px 1fr 90px; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:12.5px; align-items:baseline;}
+  .vulnrow:last-child{border-bottom:none;}
+  .vulnrow .cve{font-family:var(--mono); color:var(--muted);}
+  .vulnrow .sevtag{font-family:var(--mono); font-size:10px; text-align:center; padding:1px 6px; border-radius:2px; height:16px;}
+
+  .chatlog{max-height:280px; overflow-y:auto; padding:4px 2px; margin-bottom:14px; display:flex; flex-direction:column; gap:10px;}
+  .msg{max-width:78%; padding:10px 13px; border-radius:6px; font-size:13px; line-height:1.55;}
+  .msg.bot{background:var(--panel-2); border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:2px;}
+  .msg.user{background:var(--green-dim); color:#DFF7EC; align-self:flex-end; border-bottom-right-radius:2px;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+  .chip{font-family:var(--mono); font-size:11px; color:var(--muted); background:var(--panel-2); border:1px solid var(--line); padding:6px 11px; border-radius:14px; cursor:pointer; transition:border-color .15s, color .15s;}
+  .chip:hover{border-color:var(--green); color:var(--text);}
+  .chatinput{display:flex; gap:10px;}
+  .chatinput input{flex:1; background:var(--panel-2); border:1px solid var(--line); border-radius:4px; padding:10px 12px; color:var(--text); font-family:var(--sans); font-size:13px;}
+  .chatinput input:focus{outline:none; border-color:var(--green);}
+  .chatinput button{background:var(--green); color:var(--navy); border:none; border-radius:4px; padding:10px 18px; font-family:var(--sans); font-weight:bold; font-size:13px; cursor:pointer;}
+  .chatinput button:hover{background:#5EE8AC;}
+
+  .bot-launcher{
+    position:fixed; right:26px; bottom:26px; z-index:40;
+    display:flex; align-items:center; gap:9px;
+    background:var(--green); color:var(--navy); font-family:var(--sans); font-weight:bold; font-size:13.5px;
+    padding:13px 20px; border-radius:26px; cursor:pointer;
+    box-shadow:0 6px 18px rgba(0,0,0,.35);
+    transition:transform .15s ease;
+  }
+  .bot-launcher:hover{transform:translateY(-2px);}
+  .bot-launcher.hidden{display:none;}
+  .botdot{width:8px;height:8px;border-radius:50%;background:var(--navy); animation:pulse 2s infinite;}
+
+  .bot-window{
+    position:fixed; right:26px; bottom:26px; z-index:50;
+    width:400px; max-width:calc(100vw - 40px); max-height:min(600px, calc(100vh - 52px));
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    box-shadow:0 12px 40px rgba(0,0,0,.5);
+    display:none; flex-direction:column; padding:18px;
+  }
+  .bot-window.open{display:flex;}
+  .bot-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px;}
+  .bot-title{font-family:var(--serif); font-size:14.5px; margin-bottom:4px;}
+  .bot-sub{font-size:10.5px; color:var(--muted-2); line-height:1.4;}
+  .bot-close{background:none; border:1px solid var(--line); color:var(--muted); border-radius:4px; width:26px; height:26px; cursor:pointer; flex-shrink:0;}
+  .bot-close:hover{color:var(--text); border-color:var(--muted);}
+  .bot-window .chatlog{flex:1; max-height:none;}
+
+  @media (max-width:520px){
+    .bot-window{right:12px; left:12px; bottom:12px; width:auto;}
+    .bot-launcher{right:16px; bottom:16px;}
+  }
+
+  @media (max-width:900px){
+    .sidebar{width:210px;}
+    .statgrid{grid-template-columns:repeat(2,1fr);}
+    .cols2, .archgrid, .posgrid, .pillargrid{grid-template-columns:1fr;}
+    .content{padding:26px 20px;}
+    .topbar{padding:16px 20px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="flagbar"><span class="g"></span><span class="y"></span><span class="r"></span></div>
+      <h1>Programme National<br>SOC &amp; CERT-CG</h1>
+      <p>République du Congo</p>
+    </div>
+    <nav class="navlist" id="navlist">
+      <button class="navitem live" data-target="s0"><span class="livedot"></span>SOC en direct</button>
+      <div class="city-container">
+        <button class="city-toggle" data-city="brazzaville"><span class="chev">▸</span><span>Brazzaville</span></button>
+        <div class="arrondissements" id="arr-brazzaville">
+          <div class="arrondissement">1er Arrondissement (Poto-Poto)</div>
+          <div class="arrondissement">2e Arrondissement (La Plateau)</div>
+          <div class="arrondissement">3e Arrondissement (Bacongo)</div>
+          <div class="arrondissement">4e Arrondissement (Makélélé)</div>
+          <div class="arrondissement">5e Arrondissement (Ouenzé)</div>
+        </div>
+
+        <button class="city-toggle" data-city="pointe-noire"><span class="chev">▸</span><span>Pointe-Noire</span></button>
+        <div class="arrondissements" id="arr-pointe-noire">
+          <div class="arrondissement">1er Arrondissement (Lumumba)</div>
+          <div class="arrondissement">2e Arrondissement (Plateau)</div>
+          <div class="arrondissement">3e Arrondissement (Mvoula-Bioko)</div>
+          <div class="arrondissement">4e Arrondissement (Tchibanga)</div>
+        </div>
+
+        <button class="city-toggle" data-city="ouesso"><span class="chev">▸</span><span>Ouesso</span></button>
+        <div class="arrondissements" id="arr-ouesso">
+          <div class="arrondissement">Centre Ville</div>
+          <div class="arrondissement">Quartier Commercial</div>
+          <div class="arrondissement">Quartier Administratif</div>
+        </div>
+
+        <button class="city-toggle" data-city="dolisie"><span class="chev">▸</span><span>Dolisie</span></button>
+        <div class="arrondissements" id="arr-dolisie">
+          <div class="arrondissement">Centre Urbain</div>
+          <div class="arrondissement">Quartier Résidentiel</div>
+          <div class="arrondissement">Quartier Industriel</div>
+        </div>
+
+        <button class="city-toggle" data-city="nkayi"><span class="chev">▸</span><span>Nkayi</span></button>
+        <div class="arrondissements" id="arr-nkayi">
+          <div class="arrondissement">Centre Ville</div>
+          <div class="arrondissement">Quartier Nord</div>
+          <div class="arrondissement">Quartier Sud</div>
+        </div>
+
+        <button class="city-toggle" data-city="impfondo"><span class="chev">▸</span><span>Impfondo</span></button>
+        <div class="arrondissements" id="arr-impfondo">
+          <div class="arrondissement">Centre Administratif</div>
+          <div class="arrondissement">Quartier Fluvial</div>
+          <div class="arrondissement">Zone Commerciale</div>
+        </div>
+
+        <button class="city-toggle" data-city="owando"><span class="chev">▸</span><span>Owando</span></button>
+        <div class="arrondissements" id="arr-owando">
+          <div class="arrondissement">Centre Ville</div>
+          <div class="arrondissement">Quartier Est</div>
+          <div class="arrondissement">Quartier Ouest</div>
+        </div>
+
+        <button class="city-toggle" data-city="makoua"><span class="chev">▸</span><span>Makoua</span></button>
+        <div class="arrondissements" id="arr-makoua">
+          <div class="arrondissement">Centre Urbain</div>
+          <div class="arrondissement">Quartier Périphérique</div>
+        </div>
+
+        <button class="city-toggle" data-city="mossaka"><span class="chev">▸</span><span>Mossaka</span></button>
+        <div class="arrondissements" id="arr-mossaka">
+          <div class="arrondissement">Centre Fluvial</div>
+          <div class="arrondissement">Port Intérieur</div>
+          <div class="arrondissement">Zone Marchande</div>
+        </div>
+
+        <button class="city-toggle" data-city="oyo"><span class="chev">▸</span><span>Oyo</span></button>
+        <div class="arrondissements" id="arr-oyo">
+          <div class="arrondissement">Centre Administratif</div>
+          <div class="arrondissement">Quartier Urbain</div>
+        </div>
+
+        <button class="city-toggle" data-city="sibiti"><span class="chev">▸</span><span>Sibiti</span></button>
+        <div class="arrondissements" id="arr-sibiti">
+          <div class="arrondissement">Centre Ville</div>
+          <div class="arrondissement">Quartier Résidentiel</div>
+        </div>
+
+        <button class="city-toggle" data-city="ewo"><span class="chev">▸</span><span>Ewo</span></button>
+        <div class="arrondissements" id="arr-ewo">
+          <div class="arrondissement">Centre Urbain</div>
+          <div class="arrondissement">Quartier Périphérique</div>
+        </div>
+
+        <button class="city-toggle" data-city="ngambai"><span class="chev">▸</span><span>Ngambai</span></button>
+        <div class="arrondissements" id="arr-ngambai">
+          <div class="arrondissement">Centre Village</div>
+          <div class="arrondissement">Zone Rurale</div>
+        </div>
+      </div>
+      <button class="navitem" data-target="s1"><span class="num">01</span>Contexte régional</button>
+      <button class="navitem" data-target="s2"><span class="num">02</span>État des lieux</button>
+      <button class="navitem" data-target="s3"><span class="num">03</span>Vision 2028</button>
+      <button class="navitem" data-target="s4"><span class="num">04</span>Architecture technique</button>
+      <button class="navitem" data-target="s5"><span class="num">05</span>Feuille de route</button>
+      <button class="navitem" data-target="s6"><span class="num">06</span>Positionnement régional</button>
+      <button class="navitem" data-target="s7"><span class="num">07</span>Indicateurs de succès</button>
+      <button class="navitem" data-target="s8"><span class="num">08</span>Gouvernance</button>
+      <button class="navitem" data-target="s9"><span class="num">09</span>Profil</button>
+      <button class="navitem cta" data-target="s10"><span class="num">→</span>Prochaines étapes</button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="statuspill"><span class="dot"></span>SOC STATUS: PROPOSED — MANDATE PENDING</div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="crumb">NATIONAL SOC / CERT — <b id="crumb-current">Centre National de Surveillance et de Réponse aux Cybermenaces</b></div>
+      <div class="badge">🛡️ SOC Operations</div>
+    </div>
+
+    <div class="content">
+
+      <!-- SECTION 0 : MAIN DASHBOARD -->
+      <section class="panel active" id="s0">
+        <div class="topbar-dash">
+          <h2 class="title-dash">SOC-CERT DASHBOARD</h2>
+        </div>
+
+        <!-- Stats Cards Row -->
+        <div class="statgrid-dash">
+          <div class="statcard-dash">
+            <div class="statcard-icon shield"><span>🛡️</span></div>
+            <div class="statcard-content">
+              <div class="statcard-label">Total Threats (24h)</div>
+              <div class="statcard-number">8,742</div>
+              <div class="statcard-change">↑ 32% vs. previous 24h</div>
+            </div>
+          </div>
+          <div class="statcard-dash">
+            <div class="statcard-icon alert"><span>⚠️</span></div>
+            <div class="statcard-content">
+              <div class="statcard-label">Critical Incidents</div>
+              <div class="statcard-number">12</div>
+              <div class="statcard-change">↑ 71% vs. previous 24h</div>
+            </div>
+          </div>
+          <div class="statcard-dash">
+            <div class="statcard-icon success"><span>✓</span></div>
+            <div class="statcard-content">
+              <div class="statcard-label">Resolved Incidents</div>
+              <div class="statcard-number">287</div>
+              <div class="statcard-change">↑ 18% vs. previous 24h</div>
+            </div>
+          </div>
+          <div class="statcard-dash">
+            <div class="statcard-icon network"><span>◉</span></div>
+            <div class="statcard-content">
+              <div class="statcard-label">Assets Monitored</div>
+              <div class="statcard-number">12,486</div>
+              <div class="statcard-change">↑ 6% vs. previous 24h</div>
+            </div>
+          </div>
+          <div class="statcard-dash">
+            <div class="statcard-icon org"><span>👥</span></div>
+            <div class="statcard-content">
+              <div class="statcard-label">Organisations Protected</div>
+              <div class="statcard-number">186</div>
+              <div class="statcard-change">↑ 9% Govt + Critical Infra</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="dashboard-grid">
+          <div class="dashboard-panel">
+            <h3 class="panel-title">Cyber Threat Overview — Congo Brazzaville</h3>
+            <div class="threat-map">
+              <div class="map-placeholder">🗺️ Threat Map Region</div>
+              <div class="threat-legend">
+                <div class="legend-item"><span class="threat-dot critical"></span>Critical</div>
+                <div class="legend-item"><span class="threat-dot high"></span>High</div>
+                <div class="legend-item"><span class="threat-dot medium"></span>Medium</div>
+                <div class="legend-item"><span class="threat-dot low"></span>Low</div>
+              </div>
+            </div>
+            <div class="threat-locations">
+              <div class="threat-location"><span class="dot critical"></span><b>Brazzaville</b><span>38%</span></div>
+              <div class="threat-location"><span class="dot high"></span><b>Pointe-Noire</b><span>21%</span></div>
+              <div class="threat-location"><span class="dot medium"></span><b>Ouesso</b><span>12%</span></div>
+              <div class="threat-location"><span class="dot medium"></span><b>Owando</b><span>9%</span></div>
+              <div class="threat-location"><span class="dot low"></span><b>Impfondo</b><span>6%</span></div>
+              <div class="threat-location"><span class="dot low"></span><b>Others</b><span>14%</span></div>
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <h3 class="panel-title">Recent Incidents <a href="#" class="view-all">View All →</a></h3>
+            <div class="incidents-list">
+              <div class="incident-row critical">
+                <div class="incident-icon">🚨</div>
+                <div class="incident-content">
+                  <div class="incident-title">Suspicious PowerShell activity</div>
+                  <div class="incident-meta">Brazzaville - Govt Network</div>
+                </div>
+                <div class="incident-time">10:12</div>
+              </div>
+              <div class="incident-row high">
+                <div class="incident-icon">⚠️</div>
+                <div class="incident-content">
+                  <div class="incident-title">Phishing campaign detected</div>
+                  <div class="incident-meta">Multiple Ministries</div>
+                </div>
+                <div class="incident-time">09:47</div>
+              </div>
+              <div class="incident-row high">
+                <div class="incident-icon">⚠️</div>
+                <div class="incident-content">
+                  <div class="incident-title">Ransomware behaviour (blocked)</div>
+                  <div class="incident-meta">Pointe-Noire - Energy Sector</div>
+                </div>
+                <div class="incident-time">08:32</div>
+              </div>
+              <div class="incident-row medium">
+                <div class="incident-icon">ℹ️</div>
+                <div class="incident-content">
+                  <div class="incident-title">Malicious domain detected</div>
+                  <div class="incident-meta">Telecom Provider</div>
+                </div>
+                <div class="incident-time">07:56</div>
+              </div>
+              <div class="incident-row medium">
+                <div class="incident-icon">ℹ️</div>
+                <div class="incident-content">
+                  <div class="incident-title">Brute force attempt</div>
+                  <div class="incident-meta">Banking Sector</div>
+                </div>
+                <div class="incident-time">06:21</div>
+              </div>
+              <div class="incident-row low">
+                <div class="incident-icon">📋</div>
+                <div class="incident-content">
+                  <div class="incident-title">Vulnerability detected (CVE-2024-XXXX)</div>
+                  <div class="incident-meta">Health Sector</div>
+                </div>
+                <div class="incident-time">04:17</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Second Row: Charts and Metrics -->
+        <div class="dashboard-grid">
+          <div class="dashboard-panel">
+            <h3 class="panel-title">Threats by Type (Last 24h)</h3>
+            <div class="chart-placeholder">
+              <div class="pie-chart">
+                <div class="pie-label">8,742<br>Total Threats</div>
+              </div>
+              <div class="chart-legend">
+                <div class="chart-item"><span class="color malware"></span>Malware 32%</div>
+                <div class="chart-item"><span class="color phishing"></span>Phishing 24%</div>
+                <div class="chart-item"><span class="color ransomware"></span>Ransomware 14%</div>
+                <div class="chart-item"><span class="color ddos"></span>DDoS 9%</div>
+                <div class="chart-item"><span class="color access"></span>Unauthorised Access 7%</div>
+                <div class="chart-item"><span class="color web"></span>Web Exploits 6%</div>
+                <div class="chart-item"><span class="color other"></span>Others 8%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <h3 class="panel-title">Sector Security Posture</h3>
+            <div class="sector-posture">
+              <div class="sector-row"><div class="sector-name">Government</div><div class="sector-gauge"><div class="gauge-fill" style="width:96%"></div></div><div class="sector-pct">96%</div><div class="sector-status healthy">Healthy</div></div>
+              <div class="sector-row"><div class="sector-name">Telecoms</div><div class="sector-gauge"><div class="gauge-fill" style="width:89%"></div></div><div class="sector-pct">89%</div><div class="sector-status good">Good</div></div>
+              <div class="sector-row"><div class="sector-name">Finance</div><div class="sector-gauge"><div class="gauge-fill" style="width:84%"></div></div><div class="sector-pct">84%</div><div class="sector-status good">Good</div></div>
+              <div class="sector-row"><div class="sector-name">Energy</div><div class="sector-gauge"><div class="gauge-fill" style="width:78%"></div></div><div class="sector-pct">78%</div><div class="sector-status fair">Fair</div></div>
+              <div class="sector-row"><div class="sector-name">Transport</div><div class="sector-gauge"><div class="gauge-fill" style="width:85%"></div></div><div class="sector-pct">85%</div><div class="sector-status good">Good</div></div>
+              <div class="sector-row"><div class="sector-name">Health</div><div class="sector-gauge"><div class="gauge-fill" style="width:91%"></div></div><div class="sector-pct">91%</div><div class="sector-status good">Good</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Third Row: Response and Metrics -->
+        <div class="dashboard-grid">
+          <div class="dashboard-panel">
+            <h3 class="panel-title">Incident Response Status</h3>
+            <div class="response-workflow">
+              <div class="response-step">
+                <div class="step-icon detect">🔍</div>
+                <div class="step-label">Detect</div>
+                <div class="step-count">287 (24h)</div>
+                <div class="step-arrow">→</div>
+              </div>
+              <div class="response-step">
+                <div class="step-icon analyze">📊</div>
+                <div class="step-label">Analyse</div>
+                <div class="step-count">62 (24h)</div>
+                <div class="step-arrow">→</div>
+              </div>
+              <div class="response-step">
+                <div class="step-icon contain">🔒</div>
+                <div class="step-label">Contain</div>
+                <div class="step-count">24 (24h)</div>
+                <div class="step-arrow">→</div>
+              </div>
+              <div class="response-step">
+                <div class="step-icon eradicate">⚔️</div>
+                <div class="step-label">Eradicate</div>
+                <div class="step-count">12 (24h)</div>
+                <div class="step-arrow">→</div>
+              </div>
+              <div class="response-step">
+                <div class="step-icon recover">✓</div>
+                <div class="step-label">Recover</div>
+                <div class="step-count">8 (24h)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <h3 class="panel-title">Key Metrics</h3>
+            <div class="key-metrics">
+              <div class="metric">
+                <div class="metric-label">MITTD</div>
+                <div class="metric-value">4 min</div>
+                <div class="metric-change">↓ 68%</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">MTTR</div>
+                <div class="metric-value">28 min</div>
+                <div class="metric-change">↑ 74%</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">SOC Coverage</div>
+                <div class="metric-value">100%</div>
+                <div class="metric-change">24/7</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Threat Intel Feeds</div>
+                <div class="metric-value">32</div>
+                <div class="metric-change">Active</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row: Threat Landscape and Quick Actions -->
+        <div class="dashboard-grid">
+          <div class="dashboard-panel">
+            <h3 class="panel-title">Global Threat Landscape</h3>
+            <div class="threat-map-world">
+              <div class="map-placeholder-world">🌍 World Threat Heat Map</div>
+            </div>
+            <div class="threat-sources">
+              <h4 style="margin:12px 0 8px 0; font-size:12px; color:var(--muted);">Top Threat Sources</h4>
+              <div class="source-item"><span class="flag">🇷🇺</span>Russia<span>18%</span></div>
+              <div class="source-item"><span class="flag">🇨🇳</span>China<span>16%</span></div>
+              <div class="source-item"><span class="flag">🇺🇸</span>USA<span>12%</span></div>
+              <div class="source-item"><span class="flag">🇺🇦</span>Ukraine<span>9%</span></div>
+              <div class="source-item"><span class="flag">🌐</span>Other<span>45%</span></div>
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <h3 class="panel-title">Live Security Feed <a href="#" class="view-all">View All →</a></h3>
+            <div class="live-feed">
+              <div class="feed-item"><div class="feed-logo">MS</div><div class="feed-content"><b>Microsoft Defender</b><br><span>Malware blocked · 421 files</span></div><div class="feed-time">10:41</div></div>
+              <div class="feed-item"><div class="feed-logo">SUR</div><div class="feed-content"><b>Suricata IDS</b><br><span>Suspicious traffic from 185.XXX.XXX.12</span></div><div class="feed-time">10:37</div></div>
+              <div class="feed-item"><div class="feed-logo">SEN</div><div class="feed-content"><b>Microsoft Sentinel</b><br><span>Alert triggered · Privilege escalation</span></div><div class="feed-time">10:29</div></div>
+              <div class="feed-item"><div class="feed-logo">TI</div><div class="feed-content"><b>Threat Intelligence</b><br><span>New IOC: 2f4e9?c...</span></div><div class="feed-time">10:18</div></div>
+              <div class="feed-item"><div class="feed-logo">FW</div><div class="feed-content"><b>Firewall</b><br><span>Blocked C2 connection · 198.51.100.23</span></div><div class="feed-time">10:03</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <button class="action-btn"><span>📄</span>Create Incident Report</button>
+          <button class="action-btn"><span>🔍</span>Search Logs</button>
+          <button class="action-btn"><span>⚡</span>Update Threat Intel</button>
+          <button class="action-btn"><span>⚙️</span>Run Forensic Analysis</button>
+        </div>
+      </section>
+
+      <!-- SECTION 1 -->
+      <section class="panel" id="s1">
+        <div class="eyebrow">01 · CONTEXTE RÉGIONAL</div>
+        <h2 class="title">Une menace en forte hausse, une fenêtre qui ne restera pas ouverte</h2>
+        <div class="statgrid">
+          <div class="statcard warn">
+            <div class="num">3 370/sem</div>
+            <div class="lbl">Tentatives d'intrusion visant des organisations africaines — en hausse de +90% sur un an</div>
+          </div>
+          <div class="statcard warn">
+            <div class="num">4 Md$+</div>
+            <div class="lbl">Pertes annuelles liées à la cybercriminalité en Afrique — un frein direct à l'investissement</div>
+          </div>
+          <div class="statcard warn">
+            <div class="num">1 / 39 sec</div>
+            <div class="lbl">Une cyberattaque dans le monde. Coût mondial projeté à 9,5 billions $ (UIT)</div>
+          </div>
+          <div class="statcard">
+            <div class="num">5 / 22</div>
+            <div class="lbl">États d'Afrique de l'Ouest et Centrale disposant d'un CSIRT national opérationnel (FIRST, 2024)</div>
+          </div>
+        </div>
+        <p class="lede" style="margin-top:24px;">La couverture CSIRT de la sous-région reste largement incomplète. Chaque case verte ci-dessous représente un État disposant d'un CSIRT national opérationnel — le Congo n'en fait pas encore partie.</p>
+        <div class="csirt-grid" id="csirtgrid"></div>
+        <div class="csirt-note">5 États opérationnels sur 22 — CEEAC/ECCAS, FIRST 2024</div>
+      </section>
+
+      <!-- SECTION 2 -->
+      <section class="panel" id="s2">
+        <div class="eyebrow">02 · ÉTAT DES LIEUX</div>
+        <h2 class="title">Le Congo dispose déjà des fondations — pas encore de l'outil opérationnel</h2>
+        <div class="cols2">
+          <div class="block">
+            <h3><span class="sq"></span>Fondations déjà en place</h3>
+            <ul class="marklist">
+              <li><span class="sq"></span>ARPCE, régulateur télécoms/postal actif depuis 2009</li>
+              <li><span class="sq"></span>Backbone fibre CAB reliant Pointe-Noire, Brazzaville et Ouesso</li>
+              <li><span class="sq"></span>Congo Digital Strategy 2030 et Plan National de Développement 2022–2026</li>
+              <li><span class="sq"></span>Ratification de la Convention de Malabo (UA)</li>
+              <li><span class="sq"></span>Organisation du 13e Cyber Drill régional à Brazzaville</li>
+            </ul>
+          </div>
+          <div class="block gap">
+            <h3><span class="sq"></span>Ce qu'il reste à combler</h3>
+            <ul class="marklist">
+              <li><span class="sq"></span>Aucun SOC national 24/7 confirmé à ce jour</li>
+              <li><span class="sq"></span>Le Congo fait partie des 17 États sur 22 sans CSIRT opérationnel</li>
+              <li><span class="sq"></span>166e rang à l'indice e-gouvernement de l'ONU</li>
+              <li><span class="sq"></span>870 Md FCFA de valeur numérique et 540 000+ citoyens connectés freinés par ce déficit (GSMA, juin 2026)</li>
+              <li><span class="sq"></span>Cadre législatif cybercriminalité à moderniser pour un SOC/CERT vivant</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3 -->
+      <section class="panel" id="s3">
+        <div class="eyebrow">03 · VISION 2028</div>
+        <h2 class="title">Un SOC souverain, un CERT-CG reconnu, un Congo qui pilote la coordination régionale</h2>
+        <div class="visionstate">D'ici 2028, le Congo opère un SOC national souverain, actif 24/7, intégré à un CERT-CG accrédité à l'international — référence de coordination des incidents pour la région ECCAS.</div>
+        <div class="pillargrid">
+          <div class="pillar"><div class="k">SOUVERAINETÉ</div><h4>Souveraineté &amp; protection</h4><p>Détection et réponse continues pour l'administration, l'énergie, la banque, les télécoms et les ports.</p></div>
+          <div class="pillar"><div class="k">MANDAT</div><h4>Mandat institutionnel</h4><p>CERT-CG légalement établi, avec autorité claire de signalement et de partage d'information.</p></div>
+          <div class="pillar"><div class="k">RÉGION</div><h4>Leadership régional</h4><p>Accréditation FIRST et rôle de point de coordination désigné pour l'ECCAS.</p></div>
+          <div class="pillar"><div class="k">CAPITAL HUMAIN</div><h4>Capital humain</h4><p>Académie nationale de cyberformation pour réduire la dépendance aux prestataires étrangers.</p></div>
+          <div class="pillar"><div class="k">ÉCONOMIE</div><h4>Levier économique</h4><p>Débloquer les 870 Md FCFA de valeur numérique identifiés par la GSMA.</p></div>
+          <div class="pillar"><div class="k">STANDARDS</div><h4>Rayonnement international</h4><p>Alignement ISO/IEC 27001, NIST CSF et standards FIRST/TRANSITS.</p></div>
+        </div>
+      </section>
+
+      <!-- SECTION 4 -->
+      <section class="panel" id="s4">
+        <div class="eyebrow">04 · ARCHITECTURE TECHNIQUE</div>
+        <h2 class="title">Deux fonctions complémentaires, une seule gouvernance</h2>
+        <div class="archgrid">
+          <div class="archcol">
+            <h3>SOC National — Surveillance &amp; Défense</h3>
+            <div class="tier"><span class="tag">T1</span><div class="tx"><b>Surveillance continue</b><span>Agrégation SIEM, triage des alertes, 24/7/365</span></div></div>
+            <div class="tier"><span class="tag">T2</span><div class="tx"><b>Analyse des incidents</b><span>Investigation, analyse de malware, threat-hunting</span></div></div>
+            <div class="tier"><span class="tag">T3</span><div class="tx"><b>Réponse avancée</b><span>Forensic numérique, analyse de cause racine, lien justice</span></div></div>
+            <div class="tier"><span class="tag">IN</span><div class="tx"><b>Renseignement sur la menace</b><span>Flux ouverts, commerciaux et régionaux (AfricaCERT)</span></div></div>
+          </div>
+          <div class="archcol">
+            <h3>CERT-CG — Coordination &amp; Interface</h3>
+            <ul class="marklist">
+              <li><span class="sq"></span>Point de contact national unique pour le signalement d'incidents</li>
+              <li><span class="sq"></span>Coordination inter-agences : gouvernement, banque, énergie, télécoms, ports</li>
+              <li><span class="sq"></span>Émission d'alertes publiques et divulgation responsable des vulnérabilités</li>
+              <li><span class="sq"></span>Coordination transfrontalière avec l'AfricaCERT, les CSIRT de l'ECCAS et FIRST</li>
+              <li><span class="sq"></span>Programmes de sensibilisation et de renforcement des capacités</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5 -->
+      <section class="panel" id="s5">
+        <div class="eyebrow">05 · FEUILLE DE ROUTE</div>
+        <h2 class="title">Un déploiement en 24 mois, structuré en trois phases</h2>
+        <p class="lede">Cliquez sur une phase pour afficher le détail des livrables.</p>
+        <div class="timeline" id="timeline">
+          <div class="phase open" data-phase="1">
+            <div class="phase-head">
+              <div class="ph-l"><span class="pnum">P1</span><div class="ptxt"><b>Fondation</b><span>Mois 1–6</span></div></div>
+              <span class="chev">▸</span>
+            </div>
+            <div class="phase-body">
+              <ul>
+                <li><span class="sq"></span>Mandat ministériel et charte de gouvernance inter-agences</li>
+                <li><span class="sq"></span>Rédaction de la législation CERT-CG</li>
+                <li><span class="sq"></span>Cartographie des risques sur les infrastructures critiques</li>
+                <li><span class="sq"></span>Procurement technologique (SIEM/SOAR, DFIR)</li>
+                <li><span class="sq"></span>Recrutement et formation TRANSITS I/II des premiers analystes</li>
+              </ul>
+            </div>
+          </div>
+          <div class="phase" data-phase="2">
+            <div class="phase-head">
+              <div class="ph-l"><span class="pnum">P2</span><div class="ptxt"><b>Construction &amp; Pilote</b><span>Mois 7–14</span></div></div>
+              <span class="chev">▸</span>
+            </div>
+            <div class="phase-body">
+              <ul>
+                <li><span class="sq"></span>Mise en service du SOC à Brazzaville</li>
+                <li><span class="sq"></span>Lancement de CERT-CG comme point de contact national</li>
+                <li><span class="sq"></span>Premiers exercices de simulation d'incident en conditions réelles</li>
+                <li><span class="sq"></span>Début du processus d'adhésion à FIRST</li>
+              </ul>
+            </div>
+          </div>
+          <div class="phase" data-phase="3">
+            <div class="phase-head">
+              <div class="ph-l"><span class="pnum">P3</span><div class="ptxt"><b>Montée en puissance</b><span>Mois 15–24</span></div></div>
+              <span class="chev">▸</span>
+            </div>
+            <div class="phase-body">
+              <ul>
+                <li><span class="sq"></span>Extension au secteur bancaire, énergétique et télécoms</li>
+                <li><span class="sq"></span>Ouverture du site de secours à Pointe-Noire</li>
+                <li><span class="sq"></span>Accréditation FIRST de CERT-CG</li>
+                <li><span class="sq"></span>Proposition de CERT-CG comme hub régional ECCAS</li>
+                <li><span class="sq"></span>Publication du premier rapport national de la menace cyber</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 6 -->
+      <section class="panel" id="s6">
+        <div class="eyebrow">06 · POSITIONNEMENT RÉGIONAL</div>
+        <h2 class="title">Pourquoi le Congo peut remporter le leadership de l'ECCAS</h2>
+        <div class="posgrid">
+          <div class="poscard"><div class="k">POLITIQUE</div><h4>Primauté politique déjà acquise</h4><p>Le Congo a accueilli le plus grand exercice régional récent de simulation d'incident cyber.</p></div>
+          <div class="poscard"><div class="k">JURIDIQUE</div><h4>Alignement légal</h4><p>Ratificateur de la Convention de Malabo, sans délai d'harmonisation juridique à rattraper.</p></div>
+          <div class="poscard"><div class="k">GÉOGRAPHIE</div><h4>Logique géographique</h4><p>Le backbone CAB fait de Pointe-Noire et Brazzaville le point de passage naturel des flux régionaux.</p></div>
+          <div class="poscard"><div class="k">OPPORTUNITÉ</div><h4>Une place encore vacante</h4><p>5 États sur 22 seulement opèrent un CSIRT ; aucun pays n'a encore été désigné hub ECCAS — la fenêtre est ouverte maintenant.</p></div>
+        </div>
+      </section>
+
+      <!-- SECTION 7 -->
+      <section class="panel" id="s7">
+        <div class="eyebrow">07 · INDICATEURS DE SUCCÈS</div>
+        <h2 class="title">Des cibles mesurables à 12 et 24 mois</h2>
+        <table class="kpi">
+          <thead><tr><th>Indicateur</th><th>Cible à 12 mois</th><th>Cible à 24 mois</th></tr></thead>
+          <tbody>
+            <tr><td>Statut CSIRT national (critères FIRST)</td><td class="m12">Établi, en cours d'accréditation</td><td class="m24">Adhésion FIRST complète</td></tr>
+            <tr><td>Entités sous surveillance SOC active</td><td class="m12">Ministères clés + 2 secteurs critiques</td><td class="m24">Tous les secteurs prioritaires intégrés</td></tr>
+            <tr><td>Délai moyen de détection/réponse</td><td class="m12">Référence établie</td><td class="m24">Réduit et publié dans le rapport annuel</td></tr>
+            <tr><td>Analystes SOC/CERT formés</td><td class="m12">15–20 (formés TRANSITS)</td><td class="m24">40+, avec parcours de carrière défini</td></tr>
+            <tr><td>Rôle de coordination régionale</td><td class="m12">Cyber Drill institutionnalisé</td><td class="m24">CERT-CG reconnu comme hub ECCAS</td></tr>
+            <tr><td>Transparence publique</td><td class="m12">Premier rapport interne</td><td class="m24">Premier rapport public de la menace cyber</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- SECTION 8 -->
+      <section class="panel" id="s8">
+        <div class="eyebrow">08 · GOUVERNANCE</div>
+        <h2 class="title">Un portage ministériel clair, une chaîne de responsabilité lisible</h2>
+        <div class="org">
+          <div class="orgbox top"><b>Ministre des Postes, Télécommunications et Économie Numérique</b><span>Conseil des Ministres</span></div>
+          <div class="orgdesc" style="text-align:center;">Portage politique, autorité budgétaire, coordination interministérielle</div>
+          <div class="connector"></div>
+          <div class="orgbox"><b>Directeur Général, CERT-CG</b><span>rapporte au Ministre</span></div>
+          <div class="orgdesc" style="text-align:center;">Direction opérationnelle, liaison FIRST/AfricaCERT, alertes publiques</div>
+          <div class="connector"></div>
+          <div class="orgrow">
+            <div>
+              <div class="orgbox"><b>Responsable des Opérations SOC</b><span>rapporte au DG</span></div>
+              <div class="orgdesc">Surveillance 24/7, gestion des analystes Tier 1–3, performance SLA</div>
+            </div>
+            <div>
+              <div class="orgbox"><b>Unité Juridique &amp; Politique</b><span>rapporte au DG</span></div>
+              <div class="orgdesc">Alignement législatif, conformité données, liaison judiciaire</div>
+            </div>
+            <div>
+              <div class="orgbox"><b>Officiers de Liaison Sectoriels</b><span>rapportent au DG</span></div>
+              <div class="orgdesc">Points de contact dédiés : banque, énergie, télécoms, ports, e-gouvernement</div>
+            </div>
+          </div>
+        </div>
+        <p class="orgnote">« Le soutien ministériel visible et soutenu est identifié comme le facteur le plus déterminant du succès du programme. »</p>
+      </section>
+
+      <!-- SECTION 9 -->
+      <section class="panel" id="s9">
+        <div class="eyebrow">09 · PROFIL</div>
+        <h2 class="title">Un parcours construit sur des infrastructures critiques réelles</h2>
+        <div class="profile-top">
+          <div class="profile-id">
+            <h3>Chris Rushdie</h3>
+            <div class="role">Cybersécurité SOC/CERT · 15 ans d'expérience, Royaume-Uni</div>
+            <p>Bilingue Français/Anglais. Certifications ITIL, Cisco, Microsoft Azure, Cybersécurité — formation complémentaire AWS en cours.</p>
+            <div class="tagrow">
+              <span class="tag">Microsoft Sentinel</span><span class="tag">Splunk ES</span><span class="tag">IBM QRadar</span>
+              <span class="tag">CrowdStrike Falcon</span><span class="tag">Defender XDR</span><span class="tag">Tenable / Qualys</span>
+              <span class="tag">ServiceNow SecOps</span><span class="tag">MISP</span>
+            </div>
+          </div>
+        </div>
+        <div class="steps">
+          <div class="step"><span class="yr">▸</span><div><b>CGI</b><span>Technicien support — fondamentaux infrastructure</span></div></div>
+          <div class="step"><span class="yr">▸</span><div><b>P&amp;O Ferries, Port de Douvres</b><span>Ingénieur réseau senior</span></div></div>
+          <div class="step"><span class="yr">▸</span><div><b>Bradford City Council</b><span>Consultant senior — secteur public</span></div></div>
+          <div class="step"><span class="yr">▸</span><div><b>24IT</b><span>Directeur de projet — stratégie &amp; gouvernance</span></div></div>
+          <div class="step"><span class="yr">▸</span><div><b>NHS &amp; Leeds United F.C.</b><span>Consultant cybersécurité</span></div></div>
+          <div class="step"><span class="yr">▸</span><div><b>Société de conseil MSP</b><span>Fondateur — depuis 2025</span></div></div>
+        </div>
+      </section>
+
+      <!-- SECTION 10 -->
+      <section class="panel" id="s10">
+        <div class="eyebrow">PROCHAINES ÉTAPES</div>
+        <h2 class="title">Autoriser le lancement de la Phase 1</h2>
+        <div class="cta-box">
+          <h3>Trois décisions pour démarrer</h3>
+          <ol>
+            <li>Mandat ministériel et charte de gouvernance inter-agences</li>
+            <li>Lancement de la législation cybersécurité / CERT-CG</li>
+            <li>Évaluation des risques sur les infrastructures critiques prioritaires</li>
+          </ol>
+          <div class="cta-sign"><b>Chris Rushdie</b> · Cybersécurité SOC/CERT · Bilingue Français/Anglais<br>Prêt à échanger sur le calendrier détaillé de mise en œuvre, à votre convenance.</div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="footer">
+      <span>Programme National SOC &amp; CERT-CG — République du Congo</span>
+      <span>Ministère des Postes, des Télécommunications et de l'Économie Numérique · Brazzaville · 2026</span>
+    </div>
+  </main>
+</div>
+
+<div id="botlauncher" class="bot-launcher">
+  <span class="botdot"></span>Assistant
+</div>
+
+<div id="botwindow" class="bot-window">
+  <div class="bot-head">
+    <div>
+      <div class="bot-title">Assistant du programme <span class="liveflag" style="color:var(--green); border-color:var(--green-dim);">SCRIPTÉ</span></div>
+      <div class="bot-sub">Correspondance par mots-clés sur le contenu de cette proposition — pas un modèle de langage.</div>
+    </div>
+    <button id="botclose" class="bot-close">✕</button>
+  </div>
+  <div class="chatlog" id="chatlog">
+    <div class="msg bot">Posez une question sur le programme — budget, calendrier, gouvernance, accréditation FIRST, effectifs — ou choisissez une suggestion ci-dessous.</div>
+  </div>
+  <div class="chips" id="chips">
+    <button class="chip" data-q="Quel est le calendrier de mise en œuvre ?">Calendrier</button>
+    <button class="chip" data-q="Quel est le budget du programme ?">Budget</button>
+    <button class="chip" data-q="Qui dirige le programme ?">Gouvernance</button>
+    <button class="chip" data-q="Comment le Congo peut devenir le hub régional ECCAS ?">Positionnement régional</button>
+    <button class="chip" data-q="Combien d'analystes seront formés ?">Effectifs</button>
+    <button class="chip" data-q="Quelle est l'expérience du porteur du projet ?">Profil</button>
+  </div>
+  <div class="chatinput">
+    <input type="text" id="chatin" placeholder="Écrivez votre question…" autocomplete="off">
+    <button id="chatsend">Envoyer</button>
+  </div>
+</div>
+
+<script>
+  // nav switching
+  var navitems = document.querySelectorAll('.navitem');
+  var panels = document.querySelectorAll('.panel');
+  var crumb = document.getElementById('crumb-current');
+  var labels = {
+    s0:'SOC en direct — démonstration', s1:'01 · Contexte régional', s2:'02 · État des lieux', s3:'03 · Vision 2028',
+    s4:'04 · Architecture technique', s5:'05 · Feuille de route', s6:'06 · Positionnement régional',
+    s7:'07 · Indicateurs de succès', s8:'08 · Gouvernance', s9:'09 · Profil', s10:'Prochaines étapes'
+  };
+  navitems[0].classList.add('active');
+  navitems.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = btn.getAttribute('data-target');
+      navitems.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      panels.forEach(function(p){ p.classList.remove('active'); });
+      document.getElementById(target).classList.add('active');
+      crumb.textContent = labels[target];
+      document.querySelector('.content').scrollTop = 0;
+      window.scrollTo(0,0);
+    });
+  });
+
+  // city toggles
+  document.querySelectorAll('.city-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var cityId = btn.getAttribute('data-city');
+      var arrDiv = document.getElementById('arr-' + cityId);
+      btn.classList.toggle('expanded');
+      arrDiv.classList.toggle('open');
+    });
+  });
+  var grid = document.getElementById('csirtgrid');
+  var activeIdx = [2,6,9,14,18];
+  for(var i=0;i<22;i++){
+    var d = document.createElement('div');
+    d.className = 'box' + (activeIdx.indexOf(i) > -1 ? ' on' : '');
+    grid.appendChild(d);
+  }
+
+  // roadmap accordion
+  document.querySelectorAll('.phase-head').forEach(function(head){
+    head.addEventListener('click', function(){
+      var phase = head.parentElement;
+      var body = phase.querySelector('.phase-body');
+      var isOpen = phase.classList.contains('open');
+      document.querySelectorAll('.phase').forEach(function(p){
+        p.classList.remove('open');
+        p.querySelector('.phase-body').style.maxHeight = null;
+      });
+      if(!isOpen){
+        phase.classList.add('open');
+        body.style.maxHeight = body.scrollHeight + 'px';
+      }
+    });
+  });
+  // open phase 1 by default
+  window.addEventListener('load', function(){
+    var first = document.querySelector('.phase.open .phase-body');
+    if(first){ first.style.maxHeight = first.scrollHeight + 'px'; }
+  });
+
+  // clock
+  function tick(){
+    var d = new Date();
+    var hh = String(d.getHours()).padStart(2,'0');
+    var mm = String(d.getMinutes()).padStart(2,'0');
+    var ss = String(d.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = 'BRAZZAVILLE ' + hh + ':' + mm + ':' + ss + ' WAT';
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // ---- LIVE SOC SIMULATION ENGINE (all data below is synthetic, for demo only) ----
+  (function(){
+    function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+    var state = { events: 1840, alerts: 47, incidents: 3, blocked: 612, vulns: 6, uptime: 99.4 };
+    var lvEvents = document.getElementById('lv-events');
+    var lvAlerts = document.getElementById('lv-alerts');
+    var lvIncidents = document.getElementById('lv-incidents');
+    var lvBlocked = document.getElementById('lv-blocked');
+    var lvVulns = document.getElementById('lv-vulns');
+    var lvUptime = document.getElementById('lv-uptime');
+
+    function renderStats(){
+      lvEvents.textContent = state.events.toLocaleString('fr-FR');
+      lvAlerts.textContent = state.alerts;
+      lvIncidents.textContent = state.incidents;
+      lvBlocked.textContent = state.blocked;
+      lvVulns.textContent = state.vulns;
+      lvUptime.textContent = state.uptime.toFixed(1) + '%';
+    }
+    renderStats();
+
+    var sectors = ['Administration', 'Banque', 'Télécoms', 'Énergie', 'Ports', 'E-gouvernement'];
+    var cities = ['Brazzaville', 'Pointe-Noire', 'Ouesso'];
+    var sevs = [
+      {k:'critical', t:'CRITIQUE'}, {k:'eleve', t:'ÉLEVÉ'}, {k:'moyen', t:'MOYEN'}, {k:'faible', t:'FAIBLE'}
+    ];
+    var descs = [
+      'Tentative de connexion anormale hors horaires',
+      'Trafic sortant suspect vers IP non catégorisée',
+      'Multiples échecs d\'authentification — brute force probable',
+      'Signature malware connue détectée (EDR)',
+      'Exfiltration de données suspectée — volume anormal',
+      'Scan de ports détecté depuis l\'extérieur',
+      'Élévation de privilèges non autorisée',
+      'Communication C2 bloquée par le pare-feu',
+      'Pièce jointe malveillante interceptée',
+      'Comportement de ransomware détecté et isolé'
+    ];
+
+    var feed = document.getElementById('feed');
+    function pushAlert(){
+      var sev = sevs[rnd(0, rnd(0,2))]; // biased toward lower severities
+      var row = document.createElement('div');
+      row.className = 'feed-row';
+      var now = new Date();
+      var ts = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+      row.innerHTML =
+        '<span class="t">'+ts+'</span>'+
+        '<span class="sev sev-'+sev.k+'">'+sev.t+'</span>'+
+        '<span class="desc">'+descs[rnd(0,descs.length-1)]+'</span>'+
+        '<span class="src">'+cities[rnd(0,2)]+' · '+sectors[rnd(0,sectors.length-1)]+'</span>';
+      feed.insertBefore(row, feed.firstChild);
+      while(feed.children.length > 9){ feed.removeChild(feed.lastChild); }
+    }
+    for(var i=0;i<6;i++){ pushAlert(); }
+
+    var gauges = [
+      {id:'g1', tid:'g1t', base:68, unit:'Mo/s'},
+      {id:'g2', tid:'g2t', base:44, unit:'Mo/s'},
+      {id:'g3', tid:'g3t', base:81, unit:'req/s'},
+      {id:'g4', tid:'g4t', base:57, unit:'Mo/s'}
+    ];
+    function renderGauges(){
+      gauges.forEach(function(g){
+        var pct = Math.max(8, Math.min(97, g.base + rnd(-12,12)));
+        document.getElementById(g.id).style.width = pct + '%';
+        document.getElementById(g.tid).textContent = Math.round(pct * 3.2) + ' ' + g.unit;
+      });
+    }
+    renderGauges();
+
+    setInterval(function(){
+      state.events += rnd(-40, 90);
+      if(state.events < 900) state.events = 900;
+      if(rnd(0,3) === 0) state.alerts += rnd(0,2);
+      if(rnd(0,9) === 0) state.blocked += rnd(1,4);
+      state.uptime = Math.min(99.9, Math.max(98.6, state.uptime + (Math.random()-0.5)*0.1));
+      renderStats();
+      renderGauges();
+      if(rnd(0,2) > 0){ pushAlert(); }
+    }, 2600);
+  })();
+
+  // ---- SCRIPTED FAQ AGENT (keyword match against proposal content — no LLM, no network call) ----
+  (function(){
+    var kb = [
+      { kws:['calendrier','phase','mois','feuille','roadmap','delai','délai','planning','quand'],
+        a:"Déploiement sur 24 mois en 3 phases : Phase 1 (mois 1–6) — mandat ministériel, législation CERT-CG, cartographie des risques, procurement, premières formations TRANSITS. Phase 2 (mois 7–14) — mise en service du SOC à Brazzaville, lancement de CERT-CG, premiers exercices, début du processus FIRST. Phase 3 (mois 15–24) — extension bancaire/énergie/télécoms, site de secours à Pointe-Noire, accréditation FIRST, rapport national de la menace." },
+      { kws:['budget','cout','coût','financement','prix','million','fcfa'],
+        a:"Le document ne chiffre pas de budget ligne par ligne — c'est une proposition de mandat et de feuille de route, pas un dossier financier. Il mentionne un enjeu économique de 870 Md FCFA de valeur numérique actuellement freinée par l'absence de SOC/CERT (source GSMA, juin 2026), mais aucun coût de mise en œuvre n'est détaillé ici." },
+      { kws:['gouvernance','dirige','responsable','ministre','hiérarchie','organigramme','qui pilote'],
+        a:"Portage politique par le Ministre des Postes, Télécommunications et Économie Numérique et le Conseil des Ministres. Sous lui, un Directeur Général CERT-CG (liaison FIRST/AfricaCERT, alertes publiques), qui supervise trois fonctions : Responsable des Opérations SOC, Unité Juridique & Politique, et Officiers de Liaison Sectoriels. Le document identifie le soutien ministériel visible et soutenu comme le facteur le plus déterminant du succès." },
+      { kws:['eccas','regional','régional','hub','leadership','afrique centrale'],
+        a:"Quatre arguments : primauté politique (le Congo a déjà accueilli le plus grand exercice cyber régional récent), alignement légal (ratificateur de la Convention de Malabo, sans retard à combler), logique géographique (le backbone CAB fait de Pointe-Noire/Brazzaville un point de passage naturel), et une place encore vacante (5 États sur 22 seulement ont un CSIRT opérationnel, aucun hub ECCAS désigné à ce jour)." },
+      { kws:['analyste','effectif','personnel','staff','formation','recrut','transits'],
+        a:"Cible à 12 mois : 15–20 analystes formés (TRANSITS I/II). Cible à 24 mois : 40+ analystes avec un parcours de carrière défini. La formation s'appuie sur les standards FIRST/TRANSITS plutôt que sur un programme propriétaire." },
+      { kws:['profil','experience','expérience','qui est','chris','rushdie','certification'],
+        a:"Chris Rushdie — 15 ans d'expérience cybersécurité SOC/CERT au Royaume-Uni. Parcours : CGI (support), P&O Ferries/Port de Douvres (réseau senior), Bradford City Council (secteur public), 24IT (gouvernance), NHS & Leeds United F.C. (cybersécurité), fondateur d'un cabinet MSP depuis 2025. Certifications ITIL, Cisco, Microsoft Azure, Cybersécurité, plus une formation AWS en cours. Plateformes opérées : Sentinel, Splunk ES, QRadar, CrowdStrike, Defender XDR, Tenable/Qualys, ServiceNow SecOps, MISP." },
+      { kws:['architecture','tier','soc national','fonctionne','structure technique'],
+        a:"Le SOC national couvre 4 niveaux : Tier 1 (surveillance continue, SIEM, triage 24/7/365), Tier 2 (analyse d'incidents, malware, threat-hunting), Tier 3 (réponse avancée, forensic, lien justice), et une fonction Intel (flux ouverts, commerciaux, régionaux via AfricaCERT). Le CERT-CG en est l'interface : point de contact national, coordination inter-agences, alertes publiques, coordination transfrontalière." },
+      { kws:['vision','2028','objectif','ambition'],
+        a:"D'ici 2028 : un SOC national souverain actif 24/7, intégré à un CERT-CG accrédité FIRST, positionné comme référence de coordination des incidents pour l'ECCAS. Six piliers : souveraineté, mandat institutionnel, leadership régional, capital humain, levier économique, rayonnement international (ISO 27001, NIST CSF, FIRST/TRANSITS)." },
+      { kws:['menace','risque','attaque','statistique','contexte'],
+        a:"3 370 tentatives d'intrusion par semaine visant des organisations africaines (+90% sur un an), plus de 4 Md$ de pertes annuelles liées à la cybercriminalité en Afrique, et seulement 5 États sur 22 en Afrique de l'Ouest/Centrale avec un CSIRT national opérationnel (FIRST, 2024)." },
+      { kws:['indicateur','kpi','succes','succès','mesure','cible'],
+        a:"Six indicateurs suivis à 12 et 24 mois : statut CSIRT (FIRST), entités sous surveillance active, délai moyen de détection/réponse, analystes formés, rôle de coordination régionale, transparence publique (rapport interne puis rapport public de la menace cyber)." }
+    ];
+
+    var fallback = "Cette question sort du périmètre de la proposition telle que rédigée — le document ne l'aborde pas explicitement. Je préfère le dire plutôt que de deviner ; reformulez ou posez une question sur le contexte, la feuille de route, la gouvernance, le positionnement régional, les indicateurs ou le profil du porteur de projet.";
+
+    function answer(q){
+      var ql = q.toLowerCase();
+      var best = null, bestScore = 0;
+      kb.forEach(function(entry){
+        var score = 0;
+        entry.kws.forEach(function(k){ if(ql.indexOf(k) !== -1) score++; });
+        if(score > bestScore){ bestScore = score; best = entry; }
+      });
+      return best ? best.a : fallback;
+    }
+
+    var log = document.getElementById('chatlog');
+    function addMsg(text, who){
+      var d = document.createElement('div');
+      d.className = 'msg ' + who;
+      d.textContent = text;
+      log.appendChild(d);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function ask(q){
+      if(!q || !q.trim()) return;
+      addMsg(q, 'user');
+      var a = answer(q);
+      setTimeout(function(){ addMsg(a, 'bot'); }, 350);
+    }
+
+    document.getElementById('chatsend').addEventListener('click', function(){
+      var input = document.getElementById('chatin');
+      ask(input.value);
+      input.value = '';
+    });
+    document.getElementById('chatin').addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){
+        ask(this.value);
+        this.value = '';
+      }
+    });
+    document.querySelectorAll('.chip').forEach(function(chip){
+      chip.addEventListener('click', function(){ ask(chip.getAttribute('data-q')); });
+    });
+
+    var launcher = document.getElementById('botlauncher');
+    var win = document.getElementById('botwindow');
+    launcher.addEventListener('click', function(){
+      win.classList.add('open');
+      launcher.classList.add('hidden');
+      document.getElementById('chatin').focus();
+    });
+    document.getElementById('botclose').addEventListener('click', function(){
+      win.classList.remove('open');
+      launcher.classList.remove('hidden');
+    });
+  })();
+</script>
+</body>
+</html>
