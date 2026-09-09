@@ -2237,7 +2237,15 @@
       vulnerabilities: { real: false, bySeverity: [] },
       notes: ['Mode démonstration — backend Sentinel non connecté. Données représentatives.'],
     };
-    const isUsableData = (d) => d && d.stats && d.stats.totalThreats && typeof d.stats.totalThreats.value === 'number';
+    // real data is "usable" only if it actually carries something — a connected but
+    // all-zero backend (no managed identity yet) keeps showing the demo instead.
+    const isUsableData = (d) => {
+      if (!d || !d.stats || !d.stats.totalThreats) return false;
+      const nz = (d.stats.totalThreats.value || 0) + ((d.summary && d.summary.activeIncidents) || 0)
+        + ((d.feed && d.feed.length) || 0) + ((d.stats.assetsMonitored && d.stats.assetsMonitored.value) || 0)
+        + ((d.series && d.series.events || []).reduce((s, p) => s + (p.c || 0), 0));
+      return nz > 0;
+    };
 
     async function refresh() {
       let data = null;
