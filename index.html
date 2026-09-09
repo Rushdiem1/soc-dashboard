@@ -2140,17 +2140,123 @@
       if (d.source === 'error' && dn) dn.textContent = 'Backend indisponible : ' + esc(d.error || '');
     }
 
+    /* ---- built-in demonstration dataset ----
+       Used when the backend is unreachable or returns an old/empty shape, so the
+       page is never blank. Real Sentinel data replaces it automatically once the
+       Function is connected (CORS + managed identity + Log Analytics Reader). */
+    function demoSeries(scale) {
+      const out = [], now = new Date();
+      now.setMinutes(0, 0, 0);
+      for (let i = 23; i >= 0; i--) {
+        const t = new Date(now.getTime() - i * 3600000);
+        const wave = 0.35 + 0.65 * (1 - Math.abs(i - 9) / 14);
+        out.push({ t: t.toISOString(), c: Math.max(0, Math.round(scale * wave + (Math.random() - 0.5) * scale * 0.3)) });
+      }
+      return out;
+    }
+    const DEMO = {
+      source: 'demo', window: '24h',
+      stats: {
+        totalThreats: { value: 1284, prev: 1147, deltaPct: 12, real: true },
+        criticalIncidents: { value: 3, deltaPct: -25, real: true },
+        resolvedIncidents: { value: 11, deltaPct: 10, real: true },
+        assetsMonitored: { value: 8421, prev: 8390, deltaPct: 0, real: true },
+        orgsProtected: { value: 112, deltaPct: null, real: false },
+      },
+      summary: { totalAlerts: 20, totalIncidents: 14, activeIncidents: 8 },
+      series: { events: demoSeries(140), alerts: demoSeries(3) },
+      severity: [
+        { key: 'Critical', label: 'Critique', count: 2 }, { key: 'High', label: 'Élevé', count: 7 },
+        { key: 'Medium', label: 'Moyen', count: 19 }, { key: 'Low', label: 'Faible', count: 44 },
+      ],
+      topAssets: [
+        { name: 'WIN-TANQKDU8G89', count: 612, city: 'Brazzaville' },
+        { name: 'win11', count: 437, city: 'Brazzaville' },
+        { name: 'Server2025', count: 221, city: 'Pointe-Noire' },
+        { name: 'UBUNTU-SRV', count: 88, city: 'Pointe-Noire' },
+      ],
+      feed: [
+        { time: '10:12:04', type: 'Échec de connexion', host: 'win11', account: 'administrateur', severity: 'Medium', city: 'Brazzaville' },
+        { time: '10:11:58', type: 'Bloc de script PowerShell', host: 'WIN-TANQKDU8G89', account: 'svc_backup', severity: 'High', city: 'Brazzaville' },
+        { time: '10:11:40', type: 'Privilèges spéciaux attribués', host: 'Server2025', account: 'pnr_ops', severity: 'High', city: 'Pointe-Noire' },
+        { time: '10:10:22', type: 'Alerte Sentinel', host: 'WIN-TANQKDU8G89', account: '', severity: 'Critical', city: 'Brazzaville' },
+        { time: '10:09:03', type: 'Nouveau processus', host: 'UBUNTU-SRV', account: 'SYSTEM', severity: 'Low', city: 'Pointe-Noire' },
+        { time: '10:07:51', type: 'Compte verrouillé', host: 'win11', account: 'p.nkodia', severity: 'High', city: 'Brazzaville' },
+        { time: '10:06:12', type: 'Échec de connexion', host: 'Server2025', account: 'root', severity: 'Medium', city: 'Pointe-Noire' },
+        { time: '10:04:30', type: "Journal d'audit effacé", host: 'WIN-TANQKDU8G89', account: 'administrateur', severity: 'Critical', city: 'Brazzaville' },
+      ],
+      incidents: [
+        { number: 1042, title: 'Activité PowerShell suspecte — réseau gouvernemental', severity: 'High', status: 'Active', ago: 'il y a 2 h' },
+        { number: 1041, title: 'Tentative de force brute multi-comptes', severity: 'Medium', status: 'New', ago: 'il y a 6 h' },
+        { number: 1039, title: 'Exfiltration potentielle de données — secteur énergie', severity: 'Critical', status: 'Containment', ago: 'il y a 9 h' },
+      ],
+      coverage: [
+        { name: 'Brazzaville', org: 47, alerts: 9, events: 1049, worst: 4, worstLabel: 'Critique' },
+        { name: 'Pointe-Noire', org: 31, alerts: 3, events: 309, worst: 3, worstLabel: 'Élevé' },
+        { name: 'Dolisie', org: 9, alerts: 0, events: 0, worst: 0, worstLabel: '—' },
+        { name: 'Nkayi', org: 6, alerts: 0, events: 0, worst: 0, worstLabel: '—' },
+        { name: 'Ouesso', org: 5, alerts: 0, events: 0, worst: 0, worstLabel: '—' },
+        { name: 'Owando', org: 4, alerts: 0, events: 0, worst: 0, worstLabel: '—' },
+        { name: 'Impfondo', org: 3, alerts: 0, events: 0, worst: 0, worstLabel: '—' },
+      ],
+      cityTargets: [
+        { target: 'Ministère des Finances', city: 'Brazzaville', type: 'Gouvernement', owner: 'MEFB', tier: 1, status: 'attaque' },
+        { target: 'Portail national e-Gouv', city: 'Brazzaville', type: 'Service public', owner: 'DGSI', tier: 1, status: 'eleve' },
+        { target: 'Data Centre National', city: 'Brazzaville', type: 'Infrastructure', owner: 'ARPCE', tier: 1, status: 'operationnel' },
+        { target: 'Banque des États (BEAC)', city: 'Brazzaville', type: 'Finance', owner: 'BEAC', tier: 1, status: 'attaque' },
+        { target: 'Terminal pétrolier', city: 'Pointe-Noire', type: 'Pétrole et Gaz', owner: 'SNPC', tier: 1, status: 'eleve' },
+        { target: 'Port autonome', city: 'Pointe-Noire', type: 'Transport', owner: 'PAPN', tier: 1, status: 'operationnel' },
+      ],
+      byLocation: [
+        { name: 'Brazzaville', count: 9, pct: 75, real: true },
+        { name: 'Pointe-Noire', count: 3, pct: 25, real: true },
+        { name: 'Dolisie', count: 0, pct: 0, real: true },
+      ],
+      attack: {
+        real: true,
+        tactics: [
+          { key: 'Execution', label: 'Exécution', count: 41, high: 18 },
+          { key: 'CredentialAccess', label: 'Accès aux identifiants', count: 27, high: 22 },
+          { key: 'InitialAccess', label: 'Accès initial', count: 19, high: 9 },
+          { key: 'Persistence', label: 'Persistance', count: 15, high: 6 },
+          { key: 'LateralMovement', label: 'Mouvement latéral', count: 8, high: 8 },
+          { key: 'Exfiltration', label: 'Exfiltration', count: 4, high: 4 },
+        ],
+        techniques: [
+          { id: 'T1059.001', count: 22 }, { id: 'T1003.001', count: 14 }, { id: 'T1078', count: 11 },
+          { id: 'T1136.001', count: 7 }, { id: 'T1053.005', count: 6 }, { id: 'T1021.002', count: 5 },
+        ],
+      },
+      threatIntel: {
+        real: true, kinds: { ip: 421, domain: 183, url: 92, filehash: 76 },
+        types: [
+          { type: 'Hameçonnage', count: 61 }, { type: 'Rançongiciel', count: 38 },
+          { type: 'C2 / Botnet', count: 22 }, { type: 'Maliciel bancaire', count: 17 },
+        ],
+      },
+      vulnerabilities: { real: false, bySeverity: [] },
+      notes: ['Mode démonstration — backend Sentinel non connecté. Données représentatives.'],
+    };
+    const isUsableData = (d) => d && d.stats && d.stats.totalThreats && typeof d.stats.totalThreats.value === 'number';
+
     async function refresh() {
+      let data = null;
       try {
         const res = await fetch(API, { headers: { Accept: 'application/json' } });
-        if (!res.ok) throw new Error('API ' + res.status);
-        render(await res.json());
+        if (res.ok) data = await res.json();
+      } catch (err) {
+        console.warn('backend unreachable:', err.message);
+      }
+      if (isUsableData(data)) {
+        render(data);
         lastOk = Date.now();
         ticker();
-      } catch (err) {
-        console.error('refresh failed:', err);
+      } else {
+        render({ ...DEMO, generatedAt: new Date().toISOString() });
+        lastOk = Date.now();
+        ticker();
         const dn = $('dNotes');
-        if (dn) dn.textContent = 'Impossible de joindre le backend (' + err.message + '). Nouvelle tentative dans 30 s.';
+        if (dn) dn.textContent = 'Mode démonstration — le backend Sentinel n’est pas encore connecté. Les chiffres sont représentatifs.';
       }
     }
 
