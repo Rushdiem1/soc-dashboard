@@ -617,7 +617,12 @@
   .d-map .arc.sev-Medium{stroke:var(--sev-medium);}
   .d-map .arc.sev-Low{stroke:var(--sev-low);}
   @keyframes arcmove{to{stroke-dashoffset:-40;}}
+  /* outbound (exfil / call-home) traffic — dimmer, gold, travels the other way */
+  .d-map .arc-out{stroke:var(--gold); opacity:.4; stroke-dasharray:2 7;
+    animation-name:arcmove-rev; animation-duration:3s;}
+  @keyframes arcmove-rev{to{stroke-dashoffset:40;}}
   .d-map .pkt{fill:#FFCBA6;}
+  .d-map .pkt-out{fill:var(--gold);}
   .d-map .origin{fill:var(--muted-2);}
   .d-map .originlbl{fill:var(--muted-2); font-family:var(--mono); font-size:7px;}
   .d-map .city{fill:var(--green); cursor:pointer;}
@@ -1912,18 +1917,36 @@
       });
       const arcs = [];
       const pkts = [];
-      CITIES.forEach((c) => {
+      let pktBudget = 64; // cap moving dots so SMIL stays smooth on low-end phones
+      const addArc = (id, from, to, cls) => {
+        const mx = (from.x + to.x) / 2 + (Math.random() * 90 - 45);
+        const my = (from.y + to.y) / 2 - 28 - Math.random() * 72;
+        arcs.push(`<path id="${id}" class="${cls}" d="M${from.x.toFixed(0)},${from.y.toFixed(0)} `
+          + `Q${mx.toFixed(0)},${my.toFixed(0)} ${to.x.toFixed(0)},${to.y.toFixed(0)}" `
+          + `style="animation-delay:-${(Math.random() * 3).toFixed(2)}s"/>`);
+        if (pktBudget-- > 0) {
+          const pcls = cls.indexOf('arc-out') > -1 ? 'pkt pkt-out' : 'pkt';
+          const rad = (1.4 + Math.random() * 1.2).toFixed(1);
+          pkts.push(`<circle class="${pcls}" r="${rad}">`
+            + `<animateMotion dur="${(1.4 + Math.random() * 1.9).toFixed(1)}s" `
+            + `begin="-${(Math.random() * 3).toFixed(1)}s" repeatCount="indefinite">`
+            + `<mpath href="#${id}"/></animateMotion></circle>`);
+        }
+      };
+      CITIES.forEach((c, ci) => {
         const act = byCity[c.n];
-        // base 1 arc for capitals so the map is never empty; +1 per ~2 recent events
-        let count = (c.cap ? 1 : 0) + (act ? Math.min(4, Math.ceil(act.n / 2)) : 0);
         const sev = act ? act.sev : 'Low';
-        for (let k = 0; k < count; k++) {
+        // inbound: every city runs several live lines; capitals + hot cities get many more
+        const nIn = (c.cap ? 4 : 2) + (act ? Math.min(7, Math.ceil(act.n / 1.5)) : 0);
+        // outbound: exfil / call-home — always a couple, more from cities with real activity
+        const nOut = (c.cap ? 2 : 1) + (act && act.n > 1 ? Math.min(3, Math.ceil(act.n / 4)) : 0);
+        for (let k = 0; k < nIn; k++) {
           const o = ORIGINS[(Math.random() * ORIGINS.length) | 0];
-          const mx = (o.x + c.x) / 2 + (Math.random() * 80 - 40);
-          const my = (o.y + c.y) / 2 - 40 - Math.random() * 60;
-          const id = 'arc_' + c.n.replace(/\W/g, '') + k;
-          arcs.push(`<path id="${id}" class="arc sev-${sev}" d="M${o.x.toFixed(0)},${o.y.toFixed(0)} Q${mx.toFixed(0)},${my.toFixed(0)} ${c.x},${c.y}" style="animation-delay:-${(Math.random() * 2.4).toFixed(2)}s"/>`);
-          if (k === 0) pkts.push(`<circle class="pkt" r="1.8"><animateMotion dur="${(1.8 + Math.random()).toFixed(1)}s" begin="-${(Math.random() * 2).toFixed(1)}s" repeatCount="indefinite"><mpath href="#${id}"/></animateMotion></circle>`);
+          addArc('ai_' + ci + '_' + k, o, c, 'arc sev-' + sev);
+        }
+        for (let k = 0; k < nOut; k++) {
+          const o = ORIGINS[(Math.random() * ORIGINS.length) | 0];
+          addArc('ao_' + ci + '_' + k, c, o, 'arc arc-out');
         }
       });
       const origins = ORIGINS.map((o) => {
