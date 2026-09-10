@@ -2525,7 +2525,16 @@
 
       const history = [];
       let sampler = null, ready = false, ctl = null;
-      claude?.use?.('sample').then((s) => { sampler = s; ready = true; }).catch(() => { ready = true; });
+      // `claude` is only defined inside Anthropic's artifact runtime. On a plain
+      // static host it is an *undeclared* identifier, and `claude?.use` still
+      // throws ReferenceError (optional chaining doesn't cover undeclared names).
+      const _claude = (typeof claude !== 'undefined') ? claude
+        : (typeof window !== 'undefined' && window.claude) ? window.claude : null;
+      if (_claude && _claude.use) {
+        _claude.use('sample').then((s) => { sampler = s; ready = true; }).catch(() => { ready = true; });
+      } else {
+        ready = true;
+      }
 
       async function ask(q) {
         q = q.trim(); if (!q) return;
@@ -2586,8 +2595,9 @@
       let saved = 'ops';
       try { saved = localStorage.getItem('soc_mode') || 'ops'; } catch (e) { /* ignore */ }
       setMode(['ops', 'exec', 'crisis'].includes(saved) ? saved : 'ops', saved !== 'ops');
-      renderMap([]);
-      initAssistant();
+      try { renderMap([]); } catch (e) { console.error('renderMap init', e); }
+      try { initAssistant(); } catch (e) { console.error('initAssistant', e); }
+      // data loading must never be blocked by an earlier init failure
       refresh();
       setInterval(refresh, REFRESH_MS);
     });
