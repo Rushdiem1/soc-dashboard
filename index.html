@@ -837,89 +837,143 @@
   .pf-run.ok{background:var(--green);} .pf-run.warn{background:var(--sev-medium);} .pf-run.bad{background:var(--sev-critical);}
 
   /* =========================================================
-     PHONE INTERFACE — stack the shell, tighten every grid.
-     Applies on any narrow viewport (portrait phones ~360-430px
-     and up to small tablets). No JS; layout only.
+     PHONE INTERFACE  (no JS — layout only)
+     ≤820px : slim sticky app-bar, sticky threat level, 2-col
+              KPIs, every grid collapsed, panels + map + feed
+              resized, wide proposal tables scroll.
+     ≤380px : the last few 2-col grids drop to 1 col.
      ========================================================= */
-  @media (max-width:760px){
+  @media (max-width:820px){
     html,body{overflow-x:hidden;}
-    .app{flex-direction:column; min-height:100vh;}
+    .app{flex-direction:column; min-height:100dvh;}
+
+    /* --- sidebar becomes a 48px sticky app-bar --- */
     .sidebar{
-      width:100%; flex-shrink:0; flex-direction:column;
-      border-right:none; border-bottom:1px solid var(--line);
-      padding:14px 0 8px;
+      position:sticky; top:0; z-index:45;
+      width:100%; flex-direction:row; align-items:center; gap:10px;
+      padding:8px 14px; border-right:none;
+      border-bottom:1px solid var(--line);
+      background:var(--panel-2);
     }
-    .brand{padding:0 16px 12px; margin-bottom:8px;}
-    .brand .flagbar{margin-bottom:9px;}
-    .brand h1{font-size:14px;}
+    .brand{
+      flex:1; min-width:0; display:flex; align-items:center; gap:9px;
+      padding:0; margin:0; border:none;
+    }
+    .brand .flagbar{margin:0; flex-shrink:0;}
+    .brand .flagbar span{width:16px; height:5px;}
+    .brand h1{
+      font-size:12px; line-height:1.15; margin:0; letter-spacing:0;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
     .brand h1 br{display:none;}
-    nav.navlist{padding:8px 12px 4px; overflow:visible;}
-    .navitem.live{margin-bottom:6px; padding-bottom:10px; font-size:13px;}
-    /* the city/arrondissement browser is decorative on a phone — the
-       dashboard has its own city filter + map. Hide to save vertical space. */
-    .city-container{display:none;}
-    .sidebar-foot{padding:10px 16px 0;}
+    .brand p{display:none;}
+    nav.navlist{
+      flex:0 0 auto; display:flex; align-items:center; gap:8px;
+      padding:0; overflow:visible;
+    }
+    .navitem.live{
+      margin:0; padding:8px 12px; min-height:36px;
+      border:1px solid var(--line); border-radius:4px; font-size:12px; white-space:nowrap;
+    }
+    .navitem.live.active{box-shadow:none; border-color:var(--red);}
+    /* the standalone "Actualiser" button (inline-styled) → compact icon-chip */
+    #navlist > button[onclick]{
+      margin:0 !important; padding:8px 11px !important; width:auto !important;
+      min-height:36px; border-radius:4px; font-size:0 !important; line-height:0;
+    }
+    #navlist > button[onclick]::before{content:"\21BB"; font-size:15px; line-height:1;}
+    /* decorative city browser + footer status: not needed on a phone
+       (the dashboard has its own city filter, map and status line). */
+    .city-container, .sidebar-foot{display:none;}
 
     .main{min-width:0;}
-    .topbar{padding:12px 16px; flex-wrap:wrap; gap:6px 12px;}
-    .topbar .crumb{font-size:11px; white-space:normal;}
-    .content{padding:16px 14px 44px;}
+    .topbar{display:none;}                 /* crumb duplicates the d-head title */
+    .content{padding:14px 12px 52px;}
 
-    /* institutional dashboard (#s0) */
-    .d-head{flex-direction:column; gap:10px; padding-bottom:14px; margin-bottom:16px;}
+    /* --- institutional dashboard (#s0) --- */
+    .d-head{
+      flex-direction:column; gap:8px;
+      padding-bottom:12px; margin-bottom:12px; border-bottom-width:1px;
+    }
+    .d-head__kicker{display:none;}
     .d-head h2{font-size:17px;}
-    .d-status{text-align:left; white-space:normal;}
-    .d-tl{gap:10px; padding:11px 14px;}
-    .d-tl__v{font-size:18px;}
-    .d-kpi__val{font-size:24px;}
-    .d-kpi{padding:13px 14px;}
-    .d-panel{padding:14px 13px 15px;}
-    .d-grid, .d-grid.wide{gap:14px; margin-bottom:14px;}
-    .d-map svg{height:250px;}
+    .d-head__sub{font-size:10px;}
+    .d-status{text-align:left; white-space:normal; font-size:10.5px;}
+
+    /* threat level stays pinned under the app-bar while you scroll */
+    .d-tl{
+      position:sticky; top:48px; z-index:40;
+      gap:10px; padding:10px 14px; margin-bottom:16px;
+      background:var(--panel);
+    }
+    .d-tl__v{font-size:17px;}
+    .d-tl__note{font-size:11px;}
+
+    /* KPI strips: keep 2 across (condensed), don't go full-width tall */
+    .d-kpis, .d-kpis8{grid-template-columns:repeat(2,1fr);}
+    .d-kpis .d-kpi:nth-child(2n), .d-kpis8 .d-kpi:nth-child(2n){border-right:none;}
+    .d-kpis8 .d-kpi{border-bottom:1px solid var(--line);}
+    .d-kpis8 .d-kpi:nth-last-child(-n+2){border-bottom:none;}
+    .d-kpi{padding:11px 13px;}
+    .d-kpi__lbl{font-size:9px; margin-bottom:6px;}
+    .d-kpi__val{font-size:22px;}
+    .d-kpi__delta{font-size:10px; margin-top:5px;}
+    .d-kpi--level .d-kpi__val{font-size:16px;}
+
+    .d-grid, .d-grid.wide{grid-template-columns:1fr; gap:13px; margin-bottom:13px;}
+    .d-panel{padding:13px 12px 14px;}
+    .d-panel__t{font-size:12.5px;}
+    .d-map svg{height:240px;}
     .d-feed{max-height:300px;}
-    .d-feed__row{grid-template-columns:52px 1fr; gap:8px;}
-    .d-feed__host,.d-feed__sev{display:none;}
+    .d-feed__row{grid-template-columns:50px 1fr; gap:8px;}
+    .d-feed__host, .d-feed__sev{display:none;}
     .d-sit{grid-template-columns:1fr; gap:14px;}
     .d-infra{grid-template-columns:repeat(2,1fr);}
     .d-cov{grid-template-columns:1fr 1fr;}
     .d-life{gap:0;}
     .d-life .ph{min-width:50%;}
+    .d-cityfilter{flex-wrap:wrap; gap:8px;}
     .pf-chips{gap:6px;}
     .pf-chip{font-size:10px; padding:3px 7px;}
     .pf-chip b{font-size:12px;}
+    table.d-tbl{font-size:11.5px;}
+    table.d-tbl th:nth-child(2), table.d-tbl td:nth-child(2){display:none;}  /* drop "Secteur" col */
 
-    /* legacy live-sim grid + proposal sections */
+    /* --- mode bar: full-width segmented control --- */
+    .d-modebar{width:100%; margin-bottom:14px;}
+    .d-modebar button{flex:1; min-height:40px; font-size:11px;}
+
+    /* --- legacy live-sim grid + proposal tabs --- */
     .livegrid{grid-template-columns:repeat(2,1fr); gap:10px;}
     .livecols{grid-template-columns:1fr; gap:14px;}
-    .statgrid,.statgrid-dash{grid-template-columns:repeat(2,1fr);}
-    .dashboard-grid,.archgrid,.posgrid,.pillargrid,.cols2{grid-template-columns:1fr;}
-    .key-metrics,.quick-actions{grid-template-columns:repeat(2,1fr);}
-    h2.title{font-size:21px; margin-bottom:18px;}
-    p.lede{font-size:13.5px;}
-    .csirt-grid{grid-template-columns:repeat(11,1fr); max-width:100%;}
-    .org,.orgrow{flex-direction:column; gap:12px;}
+    .statgrid, .statgrid-dash{grid-template-columns:repeat(2,1fr);}
+    .dashboard-grid, .archgrid, .posgrid, .pillargrid, .cols2{grid-template-columns:1fr;}
+    .key-metrics, .quick-actions{grid-template-columns:repeat(2,1fr);}
+    h2.title{font-size:20px; margin-bottom:16px;}
+    p.lede{font-size:13px;}
+    .csirt-grid{max-width:100%;}
+    .org, .orgrow{flex-direction:column; gap:12px;}
     .profile-top{flex-direction:column; gap:16px;}
-    .footer{flex-direction:column; gap:4px; padding:16px 14px;}
-    /* wide tables in the proposal tabs scroll instead of overflowing */
+    .footer{flex-direction:column; gap:4px; padding:16px 14px; text-align:center;}
     table.kpi{display:block; overflow-x:auto; white-space:nowrap;}
 
-    /* assistant: full-width sheet */
-    .as-win{right:8px; left:8px; bottom:8px; width:auto; height:min(70vh, 520px);}
+    /* --- assistant: bottom sheet --- */
+    .as-win{right:8px; left:8px; bottom:8px; width:auto; height:min(72dvh,520px);}
     .as-launch{right:14px; bottom:14px; padding:11px 16px; font-size:12.5px;}
   }
 
-  @media (max-width:430px){
-    .content{padding:12px 10px 40px;}
-    .d-kpis,.d-kpis8{grid-template-columns:1fr;}
+  @media (max-width:380px){
+    .content{padding:12px 10px 48px;}
+    .d-kpis, .d-kpis8{grid-template-columns:1fr;}
     .d-kpi{border-right:none; border-bottom:1px solid var(--line);}
-    .d-kpis8 .d-kpi:last-child,.d-kpis .d-kpi:last-child{border-bottom:none;}
-    .livegrid{grid-template-columns:1fr;}
-    .d-infra,.d-cov{grid-template-columns:1fr;}
-    .statgrid,.statgrid-dash,.key-metrics,.quick-actions{grid-template-columns:1fr;}
+    .d-kpis .d-kpi:last-child, .d-kpis8 .d-kpi:last-child{border-bottom:none;}
+    .livegrid, .d-infra, .d-cov{grid-template-columns:1fr;}
+    .statgrid, .statgrid-dash, .key-metrics, .quick-actions{grid-template-columns:1fr;}
     .d-head h2{font-size:15.5px;}
-    .d-map svg{height:210px;}
+    .d-map svg{height:200px;}
+    .d-life .ph{min-width:100%;}
     .response-workflow{flex-wrap:wrap; gap:10px;}
-    .response-step{flex-basis:30%;}
+    .response-step{flex-basis:45%;}
   }
 </style>
 </head>
