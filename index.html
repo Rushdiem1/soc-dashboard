@@ -2812,12 +2812,9 @@
 
     /* ---- boot ---- */
     window.fetchSentinelAlerts = refresh;
-    const SOC_LIVE_URL = 'https://chatgpt.com/s/p_855ba44499b48191947e418a8dd51a5d';
     document.addEventListener('DOMContentLoaded', () => {
       const sl = $('sentinelLink'); if (sl) sl.href = SENTINEL_URL;
       const cc = $('cityFilterClear'); if (cc) cc.addEventListener('click', clearCity);
-      document.querySelectorAll('.navitem.live').forEach((b) =>
-        b.addEventListener('click', () => window.open(SOC_LIVE_URL, '_blank', 'noopener')));
       const mb = $('modeBar');
       if (mb) mb.addEventListener('click', (e) => {
         const b = e.target.closest('button[data-mode]'); if (b) setMode(b.dataset.mode, true);
