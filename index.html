@@ -565,8 +565,13 @@
 
   .d-notes{font-size:10.5px; color:var(--muted-2); font-family:var(--mono); line-height:1.6; margin-top:6px;}
 
+  .d-simwrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  #simTbl{min-width:600px;}
+  #simTbl td .pf-chip{white-space:nowrap;}
+
   @media (max-width:1100px){ .d-grid, .d-grid.wide{grid-template-columns:1fr;} .d-kpis{grid-template-columns:repeat(2,1fr);} .d-kpi:nth-child(2){border-right:none;} }
-  @media (max-width:640px){ .d-kpis{grid-template-columns:1fr;} .d-kpi{border-right:none; border-bottom:1px solid var(--line);} .d-feed__row{grid-template-columns:56px 1fr; } .d-feed__host,.d-feed__sev{display:none;} }
+  @media (max-width:640px){ .d-kpis{grid-template-columns:1fr;} .d-kpi{border-right:none; border-bottom:1px solid var(--line);} .d-feed__row{grid-template-columns:56px 1fr; } .d-feed__host,.d-feed__sev{display:none;}
+    #simTbl{min-width:0;} #simTbl th:nth-child(5),#simTbl td:nth-child(5){display:none;} }
 
   /* ---- dark-theme tuning of the institutional dashboard ---- */
   .d-head{border-bottom-color:var(--line);}
@@ -1364,6 +1369,23 @@
           <div class="d-panel">
             <h3 class="d-panel__t">Int&eacute;gration continue GitHub <span class="d-hint">GitHub Actions &middot; s&eacute;curit&eacute;</span></h3>
             <div class="d-panel__body"><div id="pfGithub"><div class="d-empty">Chargement&hellip;</div></div></div>
+          </div>
+        </div>
+
+        <!-- Purple team : simulation d'attaque cloud & vérification de détection -->
+        <div class="d-panel d-panel--full">
+          <h3 class="d-panel__t">Simulation d'attaque &amp; d&eacute;tection
+            <span class="d-hint">purple team &middot; Entra / Azure &middot; <span id="simCoverage">&mdash;</span></span></h3>
+          <div class="d-panel__body">
+            <div class="d-simwrap">
+              <table class="d-tbl" id="simTbl">
+                <thead><tr>
+                  <th>Technique</th><th>ATT&amp;CK</th><th>Surface</th><th>Dernier lancement</th>
+                  <th>R&egrave;gle attendue</th><th>D&eacute;tection</th><th>Latence</th>
+                </tr></thead>
+                <tbody><tr><td colspan="7" class="d-empty">Chargement&hellip;</td></tr></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -2409,6 +2431,41 @@
       }).join('');
     }
 
+    function renderSimulations(d) {
+      const el = $('simTbl'); if (!el) return;
+      const sim = d.simulations || {};
+      const list = sim.rows || [];
+      const cov = sim.coverage || {};
+      const covEl = $('simCoverage');
+      if (covEl) covEl.textContent = list.length
+        ? `${cov.detected || 0}/${cov.total || list.length} techniques détectées`
+        : '—';
+      const tb = el.querySelector('tbody'); if (!tb) return;
+      if (!list.length) {
+        tb.innerHTML = '<tr><td colspan="7" class="d-empty">Aucune simulation — lancer soc-lab/sim-cloud.ps1</td></tr>';
+        return;
+      }
+      const PILL = {
+        detected: ['ok', '&#10003; détecté'],
+        pending: ['warn', '&#8987; en attente'],
+        missed: ['bad', '&#10007; manqué'],
+        never: ['muted', '&mdash; jamais lancé'],
+      };
+      const lat = (s) => s == null ? '—' : s < 90 ? `${s} s` : `${Math.round(s / 60)} min`;
+      tb.innerHTML = list.map((r) => {
+        const p = PILL[r.status] || PILL.never;
+        return '<tr>'
+          + `<td>${esc(r.label || r.id)}</td>`
+          + `<td class="num">${esc(r.mitre || '')}</td>`
+          + `<td>${esc(r.surface || '')}</td>`
+          + `<td class="num">${r.lastRunAgo ? esc(r.lastRunAgo) : '—'}</td>`
+          + `<td>${esc(r.rule || '')}</td>`
+          + `<td><span class="pf-chip ${p[0]}">${p[1]}</span></td>`
+          + `<td class="num">${r.status === 'detected' ? lat(r.latencySec) : '—'}</td>`
+          + '</tr>';
+      }).join('');
+    }
+
     function render(d) {
       lastData = d;
       // One bad panel must never blank the whole dashboard.
@@ -2425,6 +2482,7 @@
       T('pfIngestion', () => pfIngestion(d));
       T('pfActivity', () => pfActivity(d));
       T('pfGithub', () => pfGithub(d));
+      T('simulations', () => renderSimulations(d));
 
       const ser = d.series || { events: [], alerts: [] };
       T('chartEvents', () => chart('chartEvents', ser.events || []));
@@ -2576,6 +2634,16 @@
           ],
           deployOk: true, running: false, codeScanningOpen: null, dependabotOpen: null,
         }],
+      },
+      simulations: {
+        real: true,
+        coverage: { total: 4, detected: 2, pending: 1, missed: 1, never: 0 },
+        rows: [
+          { id: 'entra-sp-cred-add', label: "Ajout d'identifiants à une application", mitre: 'T1098.001', tactic: 'Persistance', surface: 'Entra', rule: 'SOC Lab - Entra: credential added to application', lastRunAgo: 'il y a 4 min', status: 'detected', latencySec: 312 },
+          { id: 'entra-user-create', label: 'Création de compte cloud', mitre: 'T1136.003', tactic: 'Persistance', surface: 'Entra', rule: 'SOC Lab - Entra: cloud user created', lastRunAgo: 'il y a 4 min', status: 'detected', latencySec: 287 },
+          { id: 'arm-nsg-open', label: 'Règle NSG ouverte sur Internet', mitre: 'T1562.007', tactic: 'Contournement des défenses', surface: 'ARM', rule: 'SOC Lab - Azure: NSG rule opened to Internet', lastRunAgo: 'il y a 3 min', status: 'pending', latencySec: null },
+          { id: 'arm-rbac-grant', label: 'Attribution de rôle privilégié', mitre: 'T1098.003', tactic: 'Élévation de privilèges', surface: 'ARM', rule: 'SOC Lab - Azure: role assignment created', lastRunAgo: 'il y a 22 min', status: 'missed', latencySec: null },
+        ],
       },
       notes: ['Mode démonstration — backend Sentinel non connecté. Données représentatives.'],
     };
