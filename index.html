@@ -2490,12 +2490,15 @@
     /* ================= "SOUS ATTAQUE" alarm : flashing incident panel + klaxon =========
        Fires when the LIVE backend reports a fresh (<25 min), open, High/Critical or
        "SOC Lab" incident. Sound plays once per incident (tracked in localStorage);
-       the red flashing stays until the incident ages out or you click "Acquitter". */
+       the flashing + sound auto-quiet after ALARM_SHOW_MS (60 s), or when you
+       click "Acquitter"; a genuinely new incident re-arms it. */
     const BASE_TITLE = document.title;
+    const ALARM_SHOW_MS = 60 * 1000;      // how long the flashing/sound stays up after a new incident
+    const ALARM_FRESH_MS = 20 * 60 * 1000; // an incident older than this no longer counts as "an attack"
     const alarm = {
       seen: new Set((() => { try { return JSON.parse(localStorage.getItem('soc_alarm_seen') || '[]'); } catch (e) { return []; } })()),
       muted: (() => { try { return localStorage.getItem('soc_alarm_muted') === '1'; } catch (e) { return false; } })(),
-      ctx: null, active: false,
+      ctx: null, active: false, until: 0,
     };
     function alarmSave() {
       try { localStorage.setItem('soc_alarm_seen', JSON.stringify([...alarm.seen].slice(-300))); } catch (e) { /* private mode */ }
@@ -2543,14 +2546,23 @@
       const now = Date.now();
       const threats = (d.incidents || []).filter((i) => {
         if (!i || String(i.status || '').toLowerCase() === 'closed') return false;
-        const fresh = i.created ? (now - new Date(i.created).getTime()) < 25 * 60000 : true;
+        const fresh = i.created ? (now - new Date(i.created).getTime()) < ALARM_FRESH_MS : true;
         const hot = /^(High|Critical)$/i.test(i.severity || '') || /^SOC Lab/i.test(i.title || '');
         return fresh && hot;
       });
-      if (!threats.length) { setAlarm(false, []); return; }
       const isNew = threats.some((i) => !alarm.seen.has(i.number));
-      setAlarm(true, threats);
-      if (isNew) { playKlaxon(); threats.forEach((i) => alarm.seen.add(i.number)); alarmSave(); }
+      if (isNew) {
+        // a genuinely new incident: flash + sound, then auto-quiet after ALARM_SHOW_MS
+        alarm.until = now + ALARM_SHOW_MS;
+        threats.forEach((i) => alarm.seen.add(i.number));
+        alarmSave();
+        setAlarm(true, threats);
+        playKlaxon();
+        return;
+      }
+      // nothing new: keep it up only until the short window expires
+      if (alarm.active && threats.length && now < alarm.until) { setAlarm(true, threats); return; }
+      if (alarm.active) setAlarm(false, []);
     }
     (function wireAlarmButtons() {
       const mb = $('socAlarmMute'), ab = $('socAlarmAck');
@@ -2565,6 +2577,7 @@
       if (ab) ab.addEventListener('click', () => {
         ((lastData && lastData.incidents) || []).forEach((i) => alarm.seen.add(i.number));
         alarmSave();
+        alarm.until = 0;
         setAlarm(false, []);
       });
     })();
