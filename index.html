@@ -360,6 +360,17 @@
   .livedot{width:7px;height:7px;border-radius:50%;background:var(--red); flex-shrink:0; animation:pulse-red 1.6s infinite;}
   @keyframes pulse-red{0%{box-shadow:0 0 0 0 rgba(198,68,76,.6);}70%{box-shadow:0 0 0 6px rgba(198,68,76,0);}100%{box-shadow:0 0 0 0 rgba(198,68,76,0);}}
 
+  /* ---- "SOUS ATTAQUE" alarm : flashing incident panel + banner ---- */
+  @keyframes soc-siren{0%,100%{box-shadow:0 0 0 0 rgba(229,72,77,0), inset 0 0 0 2000px rgba(229,72,77,0); border-color:var(--sev-critical);}50%{box-shadow:0 0 0 7px rgba(229,72,77,.30), inset 0 0 0 2000px rgba(229,72,77,.09); border-color:#ff5a5f;}}
+  @keyframes soc-siren-bg{0%,100%{background:#7a1216;}50%{background:#c6444c;}}
+  .soc-alarm-banner{position:sticky; top:0; z-index:46; display:flex; flex-wrap:wrap; align-items:center; gap:9px 14px; margin:0 0 18px; padding:12px 16px; border:1px solid #ff5a5f; color:#fff; font-family:var(--serif); animation:soc-siren-bg 1s steps(1,end) infinite;}
+  .soc-alarm-banner__t{font-size:14px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; white-space:nowrap;}
+  .soc-alarm-banner__l{font-family:var(--mono); font-size:11px; opacity:.95; flex:1 1 200px; min-width:0;}
+  .soc-alarm-banner button{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.5px; background:rgba(0,0,0,.28); color:#fff; border:1px solid rgba(255,255,255,.55); padding:5px 12px; cursor:pointer;}
+  .soc-alarm-banner button:hover{background:rgba(0,0,0,.48);}
+  .soc-alarm-panel{animation:soc-siren 1s ease-in-out infinite; border-color:var(--sev-critical)!important;}
+  @media (prefers-reduced-motion:reduce){ .soc-alarm-banner{animation:none; background:#a11d22;} .soc-alarm-panel{animation:none; box-shadow:0 0 0 3px rgba(229,72,77,.45);} }
+
   .simbanner{display:flex; align-items:center; gap:10px; background:var(--panel-2); border:1px solid var(--red); border-radius:4px; padding:10px 16px; margin-bottom:26px; font-family:var(--mono); font-size:11.5px; color:var(--red); letter-spacing:.3px;}
   .simbanner b{color:var(--red);}
 
@@ -916,6 +927,9 @@
       gap:10px; padding:10px 14px; margin-bottom:16px;
       background:var(--panel);
     }
+    .soc-alarm-banner{top:48px; padding:10px 12px; gap:7px 10px;}
+    .soc-alarm-banner__t{font-size:12.5px;}
+    .soc-alarm-banner__l{font-size:10px; flex-basis:100%;}
     .d-tl__v{font-size:17px;}
     .d-tl__note{font-size:11px;}
 
@@ -1116,6 +1130,13 @@
 
       <!-- SECTION 0 : MAIN DASHBOARD -->
       <section class="panel active" id="s0">
+
+        <div id="socAlarm" class="soc-alarm-banner" role="alert" aria-live="assertive" hidden>
+          <span class="soc-alarm-banner__t">&#9888;&nbsp; Attaque d&eacute;tect&eacute;e</span>
+          <span class="soc-alarm-banner__l" id="socAlarmList"></span>
+          <button type="button" id="socAlarmMute" title="Couper / activer le son">&#128266; Son</button>
+          <button type="button" id="socAlarmAck">Acquitter</button>
+        </div>
 
         <div class="d-head">
           <div class="d-head__id">
@@ -2466,6 +2487,88 @@
       }).join('');
     }
 
+    /* ================= "SOUS ATTAQUE" alarm : flashing incident panel + klaxon =========
+       Fires when the LIVE backend reports a fresh (<25 min), open, High/Critical or
+       "SOC Lab" incident. Sound plays once per incident (tracked in localStorage);
+       the red flashing stays until the incident ages out or you click "Acquitter". */
+    const BASE_TITLE = document.title;
+    const alarm = {
+      seen: new Set((() => { try { return JSON.parse(localStorage.getItem('soc_alarm_seen') || '[]'); } catch (e) { return []; } })()),
+      muted: (() => { try { return localStorage.getItem('soc_alarm_muted') === '1'; } catch (e) { return false; } })(),
+      ctx: null, active: false,
+    };
+    function alarmSave() {
+      try { localStorage.setItem('soc_alarm_seen', JSON.stringify([...alarm.seen].slice(-300))); } catch (e) { /* private mode */ }
+    }
+    function playKlaxon() {
+      if (alarm.muted) return;
+      try {
+        alarm.ctx = alarm.ctx || new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = alarm.ctx;
+        if (ctx.state === 'suspended') ctx.resume();
+        const t0 = ctx.currentTime;
+        for (let i = 0; i < 4; i++) {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'square';
+          o.frequency.value = i % 2 ? 440 : 680;
+          const s = t0 + i * 0.34;
+          g.gain.setValueAtTime(0.0001, s);
+          g.gain.exponentialRampToValueAtTime(0.13, s + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, s + 0.30);
+          o.connect(g).connect(ctx.destination);
+          o.start(s); o.stop(s + 0.33);
+        }
+      } catch (e) { console.warn('klaxon', e); }
+    }
+    // the first click/tap anywhere unlocks Web Audio for later alarms
+    document.addEventListener('pointerdown', () => {
+      try { if (alarm.ctx && alarm.ctx.state === 'suspended') alarm.ctx.resume(); } catch (e) { /* noop */ }
+    });
+    function incidentPanelEl() { const t = $('incCmd'); return t ? t.closest('.d-panel') : null; }
+    function setAlarm(on, threats) {
+      const banner = $('socAlarm'), panel = incidentPanelEl();
+      if (banner) banner.hidden = !on;
+      if (panel) panel.classList.toggle('soc-alarm-panel', on);
+      document.title = on ? '🔴 ATTAQUE — ' + BASE_TITLE : BASE_TITLE;
+      if (on && banner) {
+        const names = (threats || []).slice(0, 3).map((i) => '#' + i.number + ' ' + (i.title || '')).join('  ·  ');
+        const more = threats.length > 3 ? '  (+' + (threats.length - 3) + ')' : '';
+        const lg = $('socAlarmList');
+        if (lg) lg.textContent = threats.length + ' incident(s) actif(s) : ' + names + more;
+      }
+      alarm.active = on;
+    }
+    function checkAlarm(d) {
+      if (!d || d.source !== 'sentinel') { if (alarm.active) setAlarm(false, []); return; }
+      const now = Date.now();
+      const threats = (d.incidents || []).filter((i) => {
+        if (!i || String(i.status || '').toLowerCase() === 'closed') return false;
+        const fresh = i.created ? (now - new Date(i.created).getTime()) < 25 * 60000 : true;
+        const hot = /^(High|Critical)$/i.test(i.severity || '') || /^SOC Lab/i.test(i.title || '');
+        return fresh && hot;
+      });
+      if (!threats.length) { setAlarm(false, []); return; }
+      const isNew = threats.some((i) => !alarm.seen.has(i.number));
+      setAlarm(true, threats);
+      if (isNew) { playKlaxon(); threats.forEach((i) => alarm.seen.add(i.number)); alarmSave(); }
+    }
+    (function wireAlarmButtons() {
+      const mb = $('socAlarmMute'), ab = $('socAlarmAck');
+      const paint = () => { if (mb) mb.textContent = (alarm.muted ? '🔇' : '🔊') + ' Son'; };
+      paint();
+      if (mb) mb.addEventListener('click', () => {
+        alarm.muted = !alarm.muted;
+        try { localStorage.setItem('soc_alarm_muted', alarm.muted ? '1' : '0'); } catch (e) { /* noop */ }
+        paint();
+        if (!alarm.muted) playKlaxon();
+      });
+      if (ab) ab.addEventListener('click', () => {
+        ((lastData && lastData.incidents) || []).forEach((i) => alarm.seen.add(i.number));
+        alarmSave();
+        setAlarm(false, []);
+      });
+    })();
+
     function render(d) {
       lastData = d;
       // One bad panel must never blank the whole dashboard.
@@ -2475,6 +2578,7 @@
       T('infra', () => renderInfra());
       T('coverage', () => renderCoverage(d));
       T('incidentCmd', () => renderIncidentCmd(d));
+      T('alarm', () => checkAlarm(d));
       T('attack', () => renderAttack(d));
       T('threatIntel', () => renderThreatIntel(d));
       T('vulns', () => renderVulns(d));
