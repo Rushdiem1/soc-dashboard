@@ -816,6 +816,25 @@
   .cr-exit:hover{color:var(--text); border-color:var(--sev-critical);}
   #s0[data-mode="crisis"]{outline:2px solid var(--sev-critical); outline-offset:8px;}
   @media (max-width:900px){ .ex-tiles{grid-template-columns:repeat(2,1fr);} .ex-tile:nth-child(2){border-right:none;} .d-modebar{width:100%;} .d-modebar button{flex:1;} }
+  /* Phase 3 : plateforme Azure + CI/CD */
+  .pf-chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  .pf-chip{font-family:var(--mono); font-size:10.5px; letter-spacing:.4px; text-transform:uppercase;
+    padding:4px 9px; border:1px solid var(--line); color:var(--muted); white-space:nowrap;}
+  .pf-chip b{font-family:var(--serif); font-size:14px; margin-right:4px; color:var(--text);}
+  .pf-chip.ok b{color:var(--green);} .pf-chip.warn b{color:var(--sev-medium);}
+  .pf-chip.bad b{color:var(--sev-critical);} .pf-chip.muted b{color:var(--text);}
+  .pf-gauge__lbl{font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:6px;}
+  .pf-gauge__lbl b{color:var(--text);}
+  .pf-bar{height:8px; background:var(--panel-2); border:1px solid var(--line); overflow:hidden;}
+  .pf-bar__fill{height:100%; background:var(--green); transition:width .5s;}
+  .pf-bar__fill.warn{background:var(--sev-medium);} .pf-bar__fill.bad{background:var(--sev-critical);}
+  .pf-repo{padding:10px 0; border-bottom:1px solid var(--line);}
+  .pf-repo:last-child{border-bottom:none;}
+  .pf-repo__h{font-family:var(--sans); font-size:13px; color:var(--text);}
+  .pf-repo__m{font-family:var(--mono); font-size:10.5px; color:var(--muted); margin:5px 0 7px; line-height:1.6;}
+  .pf-runs{display:flex; gap:4px;}
+  .pf-run{width:14px; height:6px; background:var(--muted);}
+  .pf-run.ok{background:var(--green);} .pf-run.warn{background:var(--sev-medium);} .pf-run.bad{background:var(--sev-critical);}
 </style>
 </head>
 <body>
@@ -1178,6 +1197,29 @@
         <div class="d-panel d-panel--full">
           <h3 class="d-panel__t">Flux d'attaques en direct <span class="d-hint">40 derniers &eacute;v&eacute;nements &middot; 30&nbsp;s &middot; clic = filtrer par ville</span></h3>
           <div class="d-panel__body"><div class="d-feed" id="attackFeed"><div class="d-empty">Chargement du flux&hellip;</div></div></div>
+        </div>
+
+        <!-- Phase 3 : Plateforme Azure &amp; CI/CD -->
+        <div class="d-grid wide">
+          <div class="d-panel">
+            <h3 class="d-panel__t">Sant&eacute; des ressources Azure <span class="d-hint">Resource Health &middot; Azure Arc</span></h3>
+            <div class="d-panel__body"><div id="pfHealth"><div class="d-empty">Chargement&hellip;</div></div></div>
+          </div>
+          <div class="d-panel">
+            <h3 class="d-panel__t">Ingestion &amp; plafond <span class="d-hint">Log Analytics &middot; 24&nbsp;h</span></h3>
+            <div class="d-panel__body"><div id="pfIngest"><div class="d-empty">Chargement&hellip;</div></div></div>
+          </div>
+        </div>
+
+        <div class="d-grid wide">
+          <div class="d-panel">
+            <h3 class="d-panel__t">Journal d'activit&eacute; Azure <span class="d-hint">plan de contr&ocirc;le &middot; 24&nbsp;h</span></h3>
+            <div class="d-panel__body"><div id="pfActivity"><div class="d-empty">Chargement&hellip;</div></div></div>
+          </div>
+          <div class="d-panel">
+            <h3 class="d-panel__t">Int&eacute;gration continue GitHub <span class="d-hint">GitHub Actions &middot; s&eacute;curit&eacute;</span></h3>
+            <div class="d-panel__body"><div id="pfGithub"><div class="d-empty">Chargement&hellip;</div></div></div>
+          </div>
         </div>
 
         <div class="d-notes" id="dNotes"></div>
@@ -2108,27 +2150,129 @@
     });
 
     /* ================= ONE REFRESH ================= */
+    /* ================= PHASE 3 : Azure platform + CI/CD ================= */
+    const pfShortOp = (s) => String(s || '')
+      .replace(/^Microsoft\.[A-Za-z]+\//, '')
+      .replace(/\/(action|write|delete|read|listKeys|listkeys)$/i, '');
+
+    function pfHealth(d) {
+      const el = $('pfHealth'); if (!el) return;
+      const h = d.azureHealth || {};
+      const T = h.tally || {};
+      const chip = (n, v, cls) => `<span class="pf-chip ${cls}"><b>${nf.format(v || 0)}</b>${esc(n)}</span>`;
+      const bad = (h.unhealthy || []).map((r) =>
+        `<div class="d-feed__row"><span class="d-feed__t">!</span>`
+        + `<span class="d-feed__type">${esc(r.name)}</span>`
+        + `<span class="d-feed__host">${esc(r.type)}${r.rg ? ' &middot; ' + esc(r.rg) : ''}</span>`
+        + `<span class="d-feed__sev s-High">${esc(r.state)}</span></div>`).join('');
+      const agents = (h.agents || []).map((a) =>
+        `<div class="d-feed__row"><span class="d-feed__t">${a.ok ? '&#9679;' : '&#9675;'}</span>`
+        + `<span class="d-feed__type">${esc(a.name)}</span>`
+        + `<span class="d-feed__host">heartbeat il y a ${nf.format(a.ageMin)} min</span>`
+        + `<span class="d-feed__sev ${a.ok ? 's-Low' : 's-High'}">${a.ok ? 'actif' : 'silencieux'}</span></div>`).join('');
+      el.innerHTML =
+        `<div class="pf-chips">`
+        + chip(' disponibles', T.Available, 'ok') + chip(' dégradés', T.Degraded, 'warn')
+        + chip(' indisponibles', T.Unavailable, 'bad') + chip(' inconnus', T.Unknown, 'muted')
+        + `</div>`
+        + (bad || '')
+        + `<div class="d-sit__k">Agents Azure Arc</div>`
+        + (agents || '<div class="d-empty">Aucun heartbeat r&eacute;cent</div>')
+        + (h.real ? '' : `<div class="d-notes">Source : heartbeats &mdash; rôle &laquo;&nbsp;Reader&nbsp;&raquo; non attribué à l'identité gérée pour Resource Health.</div>`);
+    }
+
+    function pfIngestion(d) {
+      const el = $('pfIngest'); if (!el) return;
+      const g = d.ingestion || {};
+      const pct = g.pctOfCap == null ? 0 : Math.max(1, Math.min(100, g.pctOfCap));
+      const cls = (g.pctOfCap || 0) >= 90 ? 'bad' : (g.pctOfCap || 0) >= 60 ? 'warn' : 'ok';
+      el.innerHTML =
+        `<div class="pf-gauge__lbl">`
+        + `${g.last24Gb != null ? Number(g.last24Gb).toFixed(3) : '—'}&nbsp;Go / 24&nbsp;h`
+        + ` &middot; plafond ${nf.format(g.capGb || 0)}&nbsp;Go&#8239;/&#8239;j`
+        + ` &middot; <b>${g.pctOfCap == null ? '—' : g.pctOfCap + '&nbsp;%'}</b></div>`
+        + `<div class="pf-bar"><div class="pf-bar__fill ${cls}" style="width:${pct}%"></div></div>`
+        + `<div class="d-sit__k">Volume quotidien &middot; 30&nbsp;j (Mo)</div>`
+        + `<div id="pfIngestChart"></div>`
+        + `<div class="d-sit__k">Par table &middot; 24&nbsp;h (Mo)</div>`
+        + `<div class="d-rows" id="pfIngestRows"><div class="d-empty">&mdash;</div></div>`;
+      chart('pfIngestChart', (g.daily || []).map((p) => ({ t: p.t, c: Math.round(Number(p.gb || 0) * 1024) })), { bars: true });
+      rows('pfIngestRows', (g.byType || []).filter((r) => Number(r.gb) > 0)
+        .map((r) => ({ label: r.type, value: Math.round(Number(r.gb) * 1024) })));
+    }
+
+    function pfActivity(d) {
+      const el = $('pfActivity'); if (!el) return;
+      const a = d.activity || {};
+      const list = (a.events || []).slice(0, 24).map((e) => {
+        const bad = e.status === 'Failure';
+        return `<div class="d-feed__row">`
+          + `<span class="d-feed__t">${esc(e.time)}</span>`
+          + `<span class="d-feed__type" title="${esc(e.op)}">${esc(pfShortOp(e.op))}</span>`
+          + `<span class="d-feed__host">${esc(e.caller)}${e.rg ? ' &middot; ' + esc(e.rg) : ''}</span>`
+          + `<span class="d-feed__sev ${bad ? 's-High' : 's-Low'}">${esc(e.status || '—')}</span></div>`;
+      }).join('');
+      el.innerHTML =
+        `<div class="pf-chips">`
+        + `<span class="pf-chip muted"><b>${nf.format(a.total || 0)}</b> opérations</span>`
+        + `<span class="pf-chip ${a.failures ? 'bad' : 'ok'}"><b>${nf.format(a.failures || 0)}</b> échecs</span>`
+        + `<span class="pf-chip muted"><b>${nf.format(a.writes || 0)}</b> écritures</span>`
+        + `<span class="pf-chip ${a.deletes ? 'warn' : 'muted'}"><b>${nf.format(a.deletes || 0)}</b> suppressions</span>`
+        + `</div>`
+        + (list || '<div class="d-empty">Aucune opération de plan de contrôle sur 24&nbsp;h</div>');
+    }
+
+    function pfGithub(d) {
+      const el = $('pfGithub'); if (!el) return;
+      const gh = d.github || {};
+      if (!gh.repos || !gh.repos.length) {
+        el.innerHTML = `<div class="d-empty">${esc(gh.note || 'GitHub non configuré')}</div>`;
+        return;
+      }
+      el.innerHTML = gh.repos.map((r) => {
+        if (r.error) return `<div class="pf-repo"><div class="pf-repo__h">${esc(r.repo)}</div>`
+          + `<div class="pf-repo__m">${esc(r.error)}</div></div>`;
+        const lr = r.lastRun;
+        const dot = !lr ? '&#9675;' : lr.conclusion === 'success' ? '&#9679;' : lr.conclusion == null ? '&#9673;' : '&#9679;';
+        const runs = (r.recent || []).slice(0, 5).map((x) =>
+          `<span class="pf-run ${x.conclusion === 'success' ? 'ok' : x.conclusion == null ? 'warn' : 'bad'}" title="${esc(x.name + ' · ' + x.ago)}"></span>`).join('');
+        const csa = r.codeScanningOpen == null ? 'n/d' : nf.format(r.codeScanningOpen);
+        const dep = r.dependabotOpen == null ? 'n/d' : nf.format(r.dependabotOpen);
+        return `<div class="pf-repo">`
+          + `<div class="pf-repo__h">${dot} ${esc(r.repo)}</div>`
+          + `<div class="pf-repo__m">Déploiement : ${lr ? esc((lr.conclusion || 'en cours') + ' · ' + lr.ago) : '—'}`
+          + ` &nbsp;|&nbsp; Code scanning : ${csa} &nbsp;|&nbsp; Dependabot : ${dep}</div>`
+          + `<div class="pf-runs">${runs}</div></div>`;
+      }).join('');
+    }
+
     function render(d) {
       lastData = d;
-      renderKpis(d);
-      renderSituation();
-      renderInfra();
-      renderCoverage(d);
-      renderIncidentCmd(d);
-      renderAttack(d);
-      renderThreatIntel(d);
-      renderVulns(d);
+      // One bad panel must never blank the whole dashboard.
+      const T = (label, fn) => { try { fn(); } catch (e) { console.error('render:' + label, e); } };
+      T('kpis', () => renderKpis(d));
+      T('situation', () => renderSituation());
+      T('infra', () => renderInfra());
+      T('coverage', () => renderCoverage(d));
+      T('incidentCmd', () => renderIncidentCmd(d));
+      T('attack', () => renderAttack(d));
+      T('threatIntel', () => renderThreatIntel(d));
+      T('vulns', () => renderVulns(d));
+      T('pfHealth', () => pfHealth(d));
+      T('pfIngestion', () => pfIngestion(d));
+      T('pfActivity', () => pfActivity(d));
+      T('pfGithub', () => pfGithub(d));
 
       const ser = d.series || { events: [], alerts: [] };
-      chart('chartEvents', ser.events || []);
-      chart('chartAlerts', ser.alerts || [], { bars: true });
+      T('chartEvents', () => chart('chartEvents', ser.events || []));
+      T('chartAlerts', () => chart('chartAlerts', ser.alerts || [], { bars: true }));
 
-      rows('sevRows', (d.severity || []).map((s) => ({ label: s.label, value: s.count, sev: s.key })));
-      rows('assetRows', (d.topAssets || []).map((a) => ({ label: a.name, value: a.count })));
-      feed('attackFeed', d.feed || []);
-      geo('geoRows', 'geoNote', d.byLocation || []);
-      renderMap(d.feed || []);
-      applyCity();
+      T('sevRows', () => rows('sevRows', (d.severity || []).map((s) => ({ label: s.label, value: s.count, sev: s.key }))));
+      T('assetRows', () => rows('assetRows', (d.topAssets || []).map((a) => ({ label: a.name, value: a.count }))));
+      T('feed', () => feed('attackFeed', d.feed || []));
+      T('geo', () => geo('geoRows', 'geoNote', d.byLocation || []));
+      T('map', () => renderMap(d.feed || []));
+      T('applyCity', () => applyCity());
 
       // Phase 3: auto-escalate to crisis mode on a critical national level (once, unless the user picked a mode)
       if (threatLevelFrom(d) === 'critique' && !state.modeUserSet && state.mode === 'ops') setMode('crisis');
@@ -2235,6 +2379,41 @@
         ],
       },
       vulnerabilities: { real: false, bySeverity: [] },
+      azureHealth: {
+        real: false, source: 'demo',
+        tally: { Available: 9, Degraded: 1, Unavailable: 0, Unknown: 2 },
+        unhealthy: [{ name: 'soc-function-api', type: 'Microsoft.Web/sites', rg: 'SOC', state: 'Degraded' }],
+        agents: [
+          { name: 'WIN-TANQKDU8G89', ageMin: 2, ok: true },
+          { name: 'win11', ageMin: 3, ok: true },
+        ],
+      },
+      activity: {
+        real: false, total: 128, failures: 3, writes: 41, deletes: 2,
+        events: [
+          { time: '10:04:12', op: 'Microsoft.Web/sites/write', status: 'Success', caller: 'chris@…', rg: 'SOC', level: 'Informational', resource: 'soc-function-api' },
+          { time: '09:52:40', op: 'Microsoft.Authorization/roleAssignments/write', status: 'Success', caller: 'chris@…', rg: 'SOC', level: 'Informational', resource: '…' },
+          { time: '09:31:05', op: 'Microsoft.OperationalInsights/workspaces/write', status: 'Failure', caller: 'chris@…', rg: 'SOC', level: 'Warning', resource: 'SocOp' },
+        ],
+      },
+      ingestion: {
+        real: false, capGb: 1, last24Gb: 0.071, pctOfCap: 7,
+        byType: [{ type: 'Event', gb: 0.031 }, { type: 'SecurityEvent', gb: 0.018 }, { type: 'MicrosoftGraphActivityLogs', gb: 0.021 }],
+        daily: demoSeries(24).map((p) => ({ t: p.t, gb: Math.max(0.005, p.c / 1024) })),
+      },
+      github: {
+        real: false,
+        repos: [{
+          repo: 'Rushdiem1/soc-dashboard',
+          lastRun: { name: 'Azure Static Web Apps CI/CD', status: 'completed', conclusion: 'success', branch: 'main', at: '', ago: 'il y a 3 h' },
+          recent: [
+            { name: 'CI/CD', conclusion: 'success', ago: 'il y a 3 h' },
+            { name: 'CI/CD', conclusion: 'success', ago: 'il y a 6 h' },
+            { name: 'CI/CD', conclusion: 'failure', ago: 'il y a 1 j' },
+          ],
+          deployOk: true, running: false, codeScanningOpen: null, dependabotOpen: null,
+        }],
+      },
       notes: ['Mode démonstration — backend Sentinel non connecté. Données représentatives.'],
     };
     // real data is "usable" only if it actually carries something — a connected but
@@ -2249,23 +2428,36 @@
 
     async function refresh() {
       let data = null;
+      let httpNote = '';
       try {
-        const res = await fetch(API, { headers: { Accept: 'application/json' } });
+        const ac = new AbortController();
+        const to = setTimeout(() => ac.abort(), 15000);
+        const res = await fetch(API, { headers: { Accept: 'application/json' }, signal: ac.signal });
+        clearTimeout(to);
         if (res.ok) data = await res.json();
+        else { httpNote = 'HTTP ' + res.status; console.warn('backend', httpNote); }
       } catch (err) {
-        console.warn('backend unreachable:', err.message);
+        httpNote = err.name === 'AbortError' ? 'délai dépassé (15 s)' : (err.message || 'injoignable');
+        console.warn('backend unreachable:', httpNote);
       }
-      if (isUsableData(data)) {
-        render(data);
-        lastOk = Date.now();
-        ticker();
-      } else {
-        render({ ...DEMO, generatedAt: new Date().toISOString() });
-        lastOk = Date.now();
-        ticker();
+      // Never let a render error freeze the page — fall back to the demo dataset.
+      try {
+        if (isUsableData(data)) {
+          render(data);
+        } else {
+          render({ ...DEMO, generatedAt: new Date().toISOString() });
+          const dn = $('dNotes');
+          if (dn) dn.textContent = 'Mode démonstration — backend Sentinel injoignable'
+            + (httpNote ? ' (' + httpNote + ')' : '') + '. Les chiffres sont représentatifs.';
+        }
+      } catch (err) {
+        console.error('render failed:', err);
+        try { render({ ...DEMO, generatedAt: new Date().toISOString() }); } catch (e2) { /* give up quietly */ }
         const dn = $('dNotes');
-        if (dn) dn.textContent = 'Mode démonstration — le backend Sentinel n’est pas encore connecté. Les chiffres sont représentatifs.';
+        if (dn) dn.textContent = 'Affichage de secours — erreur de rendu : ' + (err && err.message || err);
       }
+      lastOk = Date.now();
+      ticker();
     }
 
     /* ================= AI ASSISTANT (claude.use("sample")) ================= */
