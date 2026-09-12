@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modèle opérationnel — SOC/CERT-CG</title>
+<style>
+  :root{
+    --navy:#08080A; --panel:#111116; --panel-2:#1A1A21; --line:#282830;
+    --green:#33C08A; --green-dim:#123528; --gold:#C7A657; --red:#E5484D;
+    --text:#ECEAE4; --muted:#9C978B; --muted-2:#67645C;
+    --sev-critical:#E5484D; --sev-high:#F1913D; --sev-medium:#E3C567; --sev-low:#6FA8DC;
+    --mono:'Consolas','SFMono-Regular','Courier New',monospace;
+    --serif:Georgia,'Cambria','Times New Roman',serif;
+    --sans:'Segoe UI','Calibri',system-ui,-apple-system,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--navy);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px 80px;}
+
+  /* topbar */
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(8,8,10,.92);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);}
+  .topbar-in{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:14px;}
+  .flagbar{display:flex;gap:4px;flex-shrink:0;}
+  .flagbar span{width:18px;height:5px;border-radius:1px;}
+  .flagbar .g{background:#00923F;} .flagbar .y{background:#FFD100;} .flagbar .r{background:#DC241F;}
+  .topbar h1{font-family:var(--serif);font-size:14.5px;font-weight:700;margin:0;letter-spacing:.2px;}
+  .topbar .sub{font-family:var(--mono);font-size:10px;color:var(--muted-2);letter-spacing:.5px;text-transform:uppercase;}
+  .back{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:4px;padding:7px 12px;white-space:nowrap;}
+  .back:hover{color:var(--text);border-color:var(--muted);}
+
+  /* hero */
+  .hero{padding:44px 0 30px;border-bottom:1px solid var(--line);margin-bottom:36px;}
+  .hero .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+  .hero h2{font-family:var(--serif);font-size:clamp(24px,4vw,34px);margin:0 0 10px;line-height:1.15;}
+  .hero p{color:var(--muted);font-size:14px;line-height:1.6;max-width:680px;margin:0 0 20px;}
+  .tl-badge{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);border-left-width:4px;
+    border-radius:4px;padding:10px 16px;background:var(--panel);}
+  .tl-badge .lbl{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+  .tl-badge .val{font-family:var(--serif);font-size:18px;font-weight:700;}
+  .tl-badge[data-level="faible"]{border-left-color:var(--sev-low);} .tl-badge[data-level="faible"] .val{color:var(--sev-low);}
+  .tl-badge[data-level="modere"]{border-left-color:var(--sev-medium);} .tl-badge[data-level="modere"] .val{color:var(--sev-medium);}
+  .tl-badge[data-level="eleve"]{border-left-color:var(--sev-high);} .tl-badge[data-level="eleve"] .val{color:var(--sev-high);}
+  .tl-badge[data-level="critique"]{border-left-color:var(--sev-critical);} .tl-badge[data-level="critique"] .val{color:var(--sev-critical);}
+
+  /* section shell */
+  .sect{margin-bottom:52px;}
+  .sect-t{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+  .sect-h{font-family:var(--serif);font-size:22px;margin:0 0 8px;}
+  .sect-sub{color:var(--muted);font-size:13px;line-height:1.6;max-width:760px;margin:0 0 24px;}
+
+  /* CERT-CG banner */
+  .certcg{background:linear-gradient(135deg,var(--panel) 0%,var(--green-dim) 140%);border:1px solid var(--line);
+    border-radius:6px;padding:22px 26px;display:flex;align-items:center;gap:18px;margin-bottom:22px;}
+  .certcg .ic{width:46px;height:46px;border-radius:50%;background:var(--green);color:#04120C;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;font-size:15px;}
+  .certcg h3{margin:0 0 4px;font-family:var(--serif);font-size:17px;}
+  .certcg p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.5;max-width:640px;}
+
+  /* tiers */
+  .tiers{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:0;align-items:stretch;}
+  .tier{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px 18px 20px;}
+  .tier .n{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--green);text-transform:uppercase;margin-bottom:8px;}
+  .tier h4{margin:0 0 8px;font-family:var(--serif);font-size:15.5px;}
+  .tier ul{margin:0;padding-left:16px;color:var(--muted);font-size:12px;line-height:1.75;}
+  .tier-arrow{display:flex;align-items:center;justify-content:center;color:var(--muted-2);font-size:20px;padding:0 8px;}
+
+  /* capability grid */
+  .capgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .cap{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 16px 17px;position:relative;}
+  .cap .tag{font-family:var(--mono);font-size:9px;letter-spacing:.8px;color:var(--muted-2);text-transform:uppercase;margin-bottom:8px;}
+  .cap h5{margin:0 0 6px;font-family:var(--serif);font-size:14.5px;}
+  .cap p{margin:0;color:var(--muted);font-size:11.5px;line-height:1.55;}
+  .cap .dot{position:absolute;top:16px;right:16px;width:7px;height:7px;border-radius:50%;background:var(--green);}
+
+  /* tech stack */
+  .techgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+  .tech{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:12px 14px;}
+  .tech b{display:block;font-size:12.5px;margin-bottom:2px;}
+  .tech span{font-family:var(--mono);font-size:10px;color:var(--muted-2);}
+
+  /* department grid */
+  .deptgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:12px;}
+  .dept{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:4px;padding:14px 16px;}
+  .dept[data-worst="critique"]{border-left-color:var(--sev-critical);}
+  .dept[data-worst="eleve"]{border-left-color:var(--sev-high);}
+  .dept[data-worst="modere"]{border-left-color:var(--sev-medium);}
+  .dept[data-worst="ok"]{border-left-color:var(--green);}
+  .dept .hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .dept h5{margin:0;font-family:var(--serif);font-size:14.5px;}
+  .dept .sevlbl{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
+  .dept .rows{display:flex;gap:16px;}
+  .dept .rows div{flex:1;}
+  .dept .rows b{display:block;font-family:var(--mono);font-size:16px;line-height:1;}
+  .dept .rows span{font-size:9.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.4px;}
+
+  .note{font-size:10.5px;color:var(--muted-2);font-style:italic;margin-top:10px;line-height:1.6;}
+
+  @media (max-width:900px){
+    .tiers{grid-template-columns:1fr;}
+    .tier-arrow{transform:rotate(90deg);padding:6px 0;}
+    .capgrid{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:520px){
+    .wrap{padding:0 14px 60px;}
+    .capgrid{grid-template-columns:1fr;}
+    .hero{padding:30px 0 22px;}
+    .topbar h1{font-size:12.5px;}
+    .topbar .sub{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-in">
+  <div class="flagbar"><span class="g"></span><span class="y"></span><span class="r"></span></div>
+  <div>
+    <h1>SOC/CERT-CG</h1>
+    <div class="sub">République du Congo</div>
+  </div>
+  <a class="back" href="./" >&larr; Tableau de bord</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">Modèle opérationnel</div>
+    <h2>Ce qu'il y a derrière le tableau de bord</h2>
+    <p>Le tableau de bord affiche les signaux. Voici l'organisation, les fonctions et la pile technologique qui
+      les produisent — la structure opérationnelle visée pour le SOC/CERT-CG, et l'état réel de la couverture par
+      département à ce stade du pilote.</p>
+    <div class="tl-badge" id="tlBadge" data-level="modere">
+      <span class="lbl">Niveau de menace national</span>
+      <span class="val" id="tlVal">&mdash;</span>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-t">Coordination</div>
+    <h3 class="sect-h">CERT-CG — Coordination nationale des incidents</h3>
+    <p class="sect-sub">Le point de coordination unique pour tout incident dépassant la capacité de traitement
+      courant : liaison inter-administrations, communication de crise, et rapport à l'autorité de tutelle.</p>
+    <div class="certcg">
+      <div class="ic">CG</div>
+      <div>
+        <h3>CERT-CG</h3>
+        <p>Reçoit les escalades du Tier 3, déclenche la réponse à incident national, coordonne avec les
+          administrations et opérateurs concernés, et publie les bulletins d'alerte nationaux.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-t">Chaîne de traitement</div>
+    <h3 class="sect-h">Les trois niveaux du SOC</h3>
+    <p class="sect-sub">Chaque alerte suit ce chemin d'escalade : un signal capté en Tier&nbsp;1 qui dépasse un
+      seuil de confiance ou d'impact est transmis au niveau supérieur.</p>
+    <div class="tiers">
+      <div class="tier">
+        <div class="n">Tier 1</div>
+        <h4>Surveillance &amp; triage</h4>
+        <ul>
+          <li>Supervision continue des alertes SIEM</li>
+          <li>Qualification initiale (faux positif / réel)</li>
+          <li>Application des procédures standard</li>
+          <li>Escalade vers le Tier 2 si nécessaire</li>
+        </ul>
+      </div>
+      <div class="tier-arrow">&rarr;</div>
+      <div class="tier">
+        <div class="n">Tier 2</div>
+        <h4>Investigation</h4>
+        <ul>
+          <li>Analyse approfondie des incidents qualifiés</li>
+          <li>Corrélation multi-source</li>
+          <li>Confinement initial</li>
+          <li>Escalade vers le Tier 3 si menace avancée</li>
+        </ul>
+      </div>
+      <div class="tier-arrow">&rarr;</div>
+      <div class="tier">
+        <div class="n">Tier 3</div>
+        <h4>Threat hunting &amp; analyse avancée</h4>
+        <ul>
+          <li>Chasse proactive aux menaces</li>
+          <li>Rétro-ingénierie / analyse forensique poussée</li>
+          <li>Attribution et suivi des campagnes</li>
+          <li>Escalade vers CERT-CG si incident national</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-t">Capacités transverses</div>
+    <h3 class="sect-h">Les fonctions qui irriguent les trois tiers</h3>
+    <p class="sect-sub">Ces disciplines ne sont pas propres à un seul tier : elles alimentent et outillent
+      la chaîne de traitement dans son ensemble.</p>
+    <div class="capgrid">
+      <div class="cap"><span class="dot"></span><div class="tag">Renseignement</div><h5>Threat Intelligence</h5>
+        <p>Collecte et diffusion d'indicateurs de compromission (IP, domaines, hashs) pour enrichir la détection.</p></div>
+      <div class="cap"><span class="dot"></span><div class="tag">Réponse</div><h5>DFIR</h5>
+        <p>Investigation numérique et réponse à incident — préservation de preuve, analyse post-mortem, remédiation.</p></div>
+      <div class="cap"><span class="dot"></span><div class="tag">Prévention</div><h5>Gestion des vulnérabilités</h5>
+        <p>Identification, priorisation et suivi de la remédiation des failles sur le périmètre surveillé.</p></div>
+      <div class="cap"><span class="dot"></span><div class="tag">Proactif</div><h5>Threat Hunting</h5>
+        <p>Recherche active de compromissions non détectées par les règles automatiques existantes.</p></div>
+      <div class="cap"><span class="dot"></span><div class="tag">Plateforme</div><h5>SIEM / SOAR</h5>
+        <p>Corrélation des journaux (SIEM) et automatisation des réponses standard (SOAR) — Microsoft Sentinel.</p></div>
+      <div class="cap"><span class="dot"></span><div class="tag">Référentiel</div><h5>MITRE ATT&amp;CK</h5>
+        <p>Cartographie des techniques d'attaque détectées sur le référentiel mondial commun aux CERT.</p></div>
+      <div class="cap"><span class="dot"></span><div class="tag">Pilotage</div><h5>Niveau de menace national</h5>
+        <p>Indicateur unique, recalculé en continu à partir des incidents critiques et actifs (voir ci-dessus).</p></div>
+      <div class="cap"><span class="dot"></span><div class="tag">Surveillance</div><h5>Infrastructures critiques</h5>
+        <p>Suivi dédié des actifs gouvernementaux, financiers et énergétiques jugés prioritaires par département.</p></div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-t">Sous le capot</div>
+    <h3 class="sect-h">Technologies utilisées</h3>
+    <p class="sect-sub">La pile réellement déployée pour ce pilote — pas une liste de souhaits.</p>
+    <div class="techgrid">
+      <div class="tech"><b>Microsoft Sentinel</b><span>SIEM / SOAR — cœur de détection</span></div>
+      <div class="tech"><b>Azure Log Analytics</b><span>Entrepôt de journaux, requêtes KQL</span></div>
+      <div class="tech"><b>Azure Functions</b><span>Plan Flex Consumption — passerelle de données</span></div>
+      <div class="tech"><b>Azure Static Web Apps</b><span>Hébergement du tableau de bord</span></div>
+      <div class="tech"><b>Azure Key Vault</b><span>Secrets applicatifs, aucune clé en clair</span></div>
+      <div class="tech"><b>Identités managées</b><span>Authentification sans mot de passe entre services</span></div>
+      <div class="tech"><b>GitHub Actions</b><span>Déploiement continu, Dependabot, Code Scanning</span></div>
+      <div class="tech"><b>MITRE ATT&amp;CK</b><span>Référentiel de cartographie des techniques</span></div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-t">Couverture</div>
+    <h3 class="sect-h">Par département</h3>
+    <p class="sect-sub" id="deptSub">Organisations surveillées, alertes et niveau de gravité le plus élevé enregistré
+      dans les dernières 24&nbsp;heures, par chef-lieu départemental.</p>
+    <div class="deptgrid" id="deptGrid">
+      <div class="dept"><div class="hd"><h5>Chargement&hellip;</h5></div></div>
+    </div>
+    <p class="note" id="deptNote"></p>
+  </div>
+
+  <p class="note">Ce schéma décrit le modèle opérationnel visé pour le SOC/CERT-CG et la pile technologique
+    effectivement déployée pour ce pilote. La maturité de chaque fonction (effectifs, astreinte 24/7, procédures
+    formalisées) fait partie de la feuille de route de déploiement, pas un état déjà atteint pour l'ensemble du
+    territoire.</p>
+
+</div>
+
+<script>
+(function(){
+  var API = (window.SOC_API_BASE
+    || 'https://soc-function-api-c0dpdmbaguhzdrgh.uksouth-01.azurewebsites.net') + '/api/httpTrigger';
+  var nf = new Intl.NumberFormat('fr-FR');
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  }); };
+  var TL_LBL = { faible:'FAIBLE', modere:'MODÉRÉ', eleve:'ÉLEVÉ', critique:'CRITIQUE' };
+  var threatLevelFrom = function(d){
+    var crit = (d.stats && d.stats.criticalIncidents && d.stats.criticalIncidents.value) || 0;
+    var act = (d.summary && d.summary.activeIncidents) || 0;
+    if (crit >= 6 || act >= 20) return 'critique';
+    if (crit >= 3) return 'eleve';
+    if (crit >= 1 || act >= 5) return 'modere';
+    return 'faible';
+  };
+  var worstKey = function(w){
+    if (w >= 4) return 'critique';
+    if (w >= 3) return 'eleve';
+    if (w >= 1) return 'modere';
+    return 'ok';
+  };
+
+  function renderDepts(list, real){
+    var grid = document.getElementById('deptGrid');
+    if (!list || !list.length){
+      grid.innerHTML = '<div class="dept"><div class="hd"><h5>Aucune donnée disponible</h5></div></div>';
+      return;
+    }
+    grid.innerHTML = list.map(function(c){
+      return '<div class="dept" data-worst="' + worstKey(c.worst || 0) + '">'
+        + '<div class="hd"><h5>' + esc(c.name) + '</h5><span class="sevlbl">' + esc(c.worstLabel || '—') + '</span></div>'
+        + '<div class="rows">'
+        + '<div><b>' + nf.format(c.org || 0) + '</b><span>Organisations</span></div>'
+        + '<div><b>' + nf.format(c.alerts || 0) + '</b><span>Alertes 24h</span></div>'
+        + '<div><b>' + nf.format(c.events || 0) + '</b><span>Événements</span></div>'
+        + '</div></div>';
+    }).join('');
+    var note = document.getElementById('deptNote');
+    if (note) note.textContent = real
+      ? 'Données Sentinel en direct.'
+      : 'Le service de données n’a pas répondu — valeurs de référence affichées à titre indicatif.';
+  }
+
+  function apply(d){
+    var lvl = threatLevelFrom(d);
+    var badge = document.getElementById('tlBadge');
+    badge.dataset.level = lvl;
+    document.getElementById('tlVal').textContent = TL_LBL[lvl];
+    renderDepts(d.coverage || [], true);
+  }
+
+  var ac = new AbortController();
+  var timer = setTimeout(function(){ ac.abort(); }, 15000);
+  fetch(API, { headers: { Accept: 'application/json' }, signal: ac.signal })
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
+    .then(function(d){ clearTimeout(timer); apply(d); })
+    .catch(function(err){
+      clearTimeout(timer);
+      console.error('operations.html fetch failed', err);
+      renderDepts([], false);
+    });
+})();
+</script>
+</body>
+</html>

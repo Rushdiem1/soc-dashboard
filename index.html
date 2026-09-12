@@ -1032,7 +1032,7 @@
       <p>République du Congo</p>
     </div>
     <nav class="navlist" id="navlist">
-      <button class="navitem live" data-target="s0"><span class="livedot"></span>SOC en direct</button>
+      <a class="navitem live" href="operations.html" target="_blank" rel="noopener"><span class="livedot"></span>SOC en direct</a>
       <button onclick="fetchSentinelAlerts()" style="margin:2px 12px 10px; padding:8px 12px; background:transparent; color:var(--muted); border:1px solid var(--line); cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:.5px; text-transform:uppercase; width:calc(100% - 24px);">Actualiser les données</button>
       <div class="city-container">
         <button class="city-toggle" data-city="brazzaville"><span class="chev">▸</span><span>Brazzaville</span></button>
@@ -1729,6 +1729,7 @@
   navitems.forEach(function(btn){
     btn.addEventListener('click', function(){
       var target = btn.getAttribute('data-target');
+      if (!target) return; // e.g. "SOC en direct" now opens operations.html in a new tab
       navitems.forEach(function(b){ b.classList.remove('active'); });
       btn.classList.add('active');
       panels.forEach(function(p){ p.classList.remove('active'); });
