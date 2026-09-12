@@ -57,16 +57,23 @@
 
   /* capability grid */
   .capgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
-  .cap{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 16px 17px;position:relative;}
+  .cap{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 16px 17px;position:relative;
+    display:block;text-decoration:none;color:inherit;}
   .cap .tag{font-family:var(--mono);font-size:9px;letter-spacing:.8px;color:var(--muted-2);text-transform:uppercase;margin-bottom:8px;}
   .cap h5{margin:0 0 6px;font-family:var(--serif);font-size:14.5px;}
   .cap p{margin:0;color:var(--muted);font-size:11.5px;line-height:1.55;}
   .cap .dot{position:absolute;top:16px;right:16px;width:7px;height:7px;border-radius:50%;background:var(--green);}
+  a.cap{transition:border-color .15s,transform .15s;cursor:pointer;}
+  a.cap:hover{border-color:var(--green);transform:translateY(-1px);}
+  a.cap:hover h5{color:var(--green);}
 
   /* tech stack */
   .techgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
-  .tech{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:12px 14px;}
+  .tech{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:12px 14px;
+    display:block;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s;cursor:pointer;}
+  .tech:hover{border-color:var(--green);transform:translateY(-1px);}
   .tech b{display:block;font-size:12.5px;margin-bottom:2px;}
+  .tech:hover b{color:var(--green);}
   .tech span{font-family:var(--mono);font-size:10px;color:var(--muted-2);}
 
   /* department grid */
@@ -182,10 +189,10 @@
         <p>Identification, priorisation et suivi de la remédiation des failles sur le périmètre surveillé.</p></div>
       <div class="cap"><span class="dot"></span><div class="tag">Proactif</div><h5>Threat Hunting</h5>
         <p>Recherche active de compromissions non détectées par les règles automatiques existantes.</p></div>
-      <div class="cap"><span class="dot"></span><div class="tag">Plateforme</div><h5>SIEM / SOAR</h5>
-        <p>Corrélation des journaux (SIEM) et automatisation des réponses standard (SOAR) — Microsoft Sentinel.</p></div>
-      <div class="cap"><span class="dot"></span><div class="tag">Référentiel</div><h5>MITRE ATT&amp;CK</h5>
-        <p>Cartographie des techniques d'attaque détectées sur le référentiel mondial commun aux CERT.</p></div>
+      <a class="cap" href="https://azure.microsoft.com/en-us/products/microsoft-sentinel/" target="_blank" rel="noopener"><span class="dot"></span><div class="tag">Plateforme</div><h5>SIEM / SOAR</h5>
+        <p>Corrélation des journaux (SIEM) et automatisation des réponses standard (SOAR) — Microsoft Sentinel.</p></a>
+      <a class="cap" href="https://attack.mitre.org/" target="_blank" rel="noopener"><span class="dot"></span><div class="tag">Référentiel</div><h5>MITRE ATT&amp;CK</h5>
+        <p>Cartographie des techniques d'attaque détectées sur le référentiel mondial commun aux CERT.</p></a>
       <div class="cap"><span class="dot"></span><div class="tag">Pilotage</div><h5>Niveau de menace national</h5>
         <p>Indicateur unique, recalculé en continu à partir des incidents critiques et actifs (voir ci-dessus).</p></div>
       <div class="cap"><span class="dot"></span><div class="tag">Surveillance</div><h5>Infrastructures critiques</h5>
@@ -198,14 +205,14 @@
     <h3 class="sect-h">Technologies utilisées</h3>
     <p class="sect-sub">La pile réellement déployée pour ce pilote — pas une liste de souhaits.</p>
     <div class="techgrid">
-      <div class="tech"><b>Microsoft Sentinel</b><span>SIEM / SOAR — cœur de détection</span></div>
-      <div class="tech"><b>Azure Log Analytics</b><span>Entrepôt de journaux, requêtes KQL</span></div>
-      <div class="tech"><b>Azure Functions</b><span>Plan Flex Consumption — passerelle de données</span></div>
-      <div class="tech"><b>Azure Static Web Apps</b><span>Hébergement du tableau de bord</span></div>
-      <div class="tech"><b>Azure Key Vault</b><span>Secrets applicatifs, aucune clé en clair</span></div>
-      <div class="tech"><b>Identités managées</b><span>Authentification sans mot de passe entre services</span></div>
-      <div class="tech"><b>GitHub Actions</b><span>Déploiement continu, Dependabot, Code Scanning</span></div>
-      <div class="tech"><b>MITRE ATT&amp;CK</b><span>Référentiel de cartographie des techniques</span></div>
+      <a class="tech" href="https://azure.microsoft.com/en-us/products/microsoft-sentinel/" target="_blank" rel="noopener"><b>Microsoft Sentinel</b><span>SIEM / SOAR — cœur de détection</span></a>
+      <a class="tech" href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview" target="_blank" rel="noopener"><b>Azure Log Analytics</b><span>Entrepôt de journaux, requêtes KQL</span></a>
+      <a class="tech" href="https://azure.microsoft.com/en-us/products/functions" target="_blank" rel="noopener"><b>Azure Functions</b><span>Plan Flex Consumption — passerelle de données</span></a>
+      <a class="tech" href="https://azure.microsoft.com/en-us/products/app-service/static" target="_blank" rel="noopener"><b>Azure Static Web Apps</b><span>Hébergement du tableau de bord</span></a>
+      <a class="tech" href="https://azure.microsoft.com/en-us/products/key-vault" target="_blank" rel="noopener"><b>Azure Key Vault</b><span>Secrets applicatifs, aucune clé en clair</span></a>
+      <a class="tech" href="https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview" target="_blank" rel="noopener"><b>Identités managées</b><span>Authentification sans mot de passe entre services</span></a>
+      <a class="tech" href="https://github.com/" target="_blank" rel="noopener"><b>GitHub Actions</b><span>Déploiement continu, Dependabot, Code Scanning</span></a>
+      <a class="tech" href="https://attack.mitre.org/" target="_blank" rel="noopener"><b>MITRE ATT&amp;CK</b><span>Référentiel de cartographie des techniques</span></a>
     </div>
   </div>
 
