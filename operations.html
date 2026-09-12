@@ -32,19 +32,6 @@
     color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:4px;padding:7px 12px;white-space:nowrap;}
   .back:hover{color:var(--text);border-color:var(--muted);}
 
-  /* hero */
-  .hero{padding:44px 0 30px;border-bottom:1px solid var(--line);margin-bottom:36px;}
-  .hero .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
-  .hero h2{font-family:var(--serif);font-size:clamp(24px,4vw,34px);margin:0 0 10px;line-height:1.15;}
-  .hero p{color:var(--muted);font-size:14px;line-height:1.6;max-width:680px;margin:0 0 20px;}
-  .tl-badge{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);border-left-width:4px;
-    border-radius:4px;padding:10px 16px;background:var(--panel);}
-  .tl-badge .lbl{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
-  .tl-badge .val{font-family:var(--serif);font-size:18px;font-weight:700;}
-  .tl-badge[data-level="faible"]{border-left-color:var(--sev-low);} .tl-badge[data-level="faible"] .val{color:var(--sev-low);}
-  .tl-badge[data-level="modere"]{border-left-color:var(--sev-medium);} .tl-badge[data-level="modere"] .val{color:var(--sev-medium);}
-  .tl-badge[data-level="eleve"]{border-left-color:var(--sev-high);} .tl-badge[data-level="eleve"] .val{color:var(--sev-high);}
-  .tl-badge[data-level="critique"]{border-left-color:var(--sev-critical);} .tl-badge[data-level="critique"] .val{color:var(--sev-critical);}
 
   /* section shell */
   .sect{margin-bottom:52px;}
@@ -107,7 +94,6 @@
   @media (max-width:520px){
     .wrap{padding:0 14px 60px;}
     .capgrid{grid-template-columns:1fr;}
-    .hero{padding:30px 0 22px;}
     .topbar h1{font-size:12.5px;}
     .topbar .sub{display:none;}
   }
@@ -126,19 +112,7 @@
 
 <div class="wrap">
 
-  <div class="hero">
-    <div class="eyebrow">Modèle opérationnel</div>
-    <h2>Ce qu'il y a derrière le tableau de bord</h2>
-    <p>Le tableau de bord affiche les signaux. Voici l'organisation, les fonctions et la pile technologique qui
-      les produisent — la structure opérationnelle visée pour le SOC/CERT-CG, et l'état réel de la couverture par
-      département à ce stade du pilote.</p>
-    <div class="tl-badge" id="tlBadge" data-level="modere">
-      <span class="lbl">Niveau de menace national</span>
-      <span class="val" id="tlVal">&mdash;</span>
-    </div>
-  </div>
-
-  <div class="sect">
+  <div class="sect" style="margin-top:44px;">
     <div class="sect-t">Coordination</div>
     <h3 class="sect-h">CERT-CG — Coordination nationale des incidents</h3>
     <p class="sect-sub">Le point de coordination unique pour tout incident dépassant la capacité de traitement
@@ -261,15 +235,6 @@
   var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
   }); };
-  var TL_LBL = { faible:'FAIBLE', modere:'MODÉRÉ', eleve:'ÉLEVÉ', critique:'CRITIQUE' };
-  var threatLevelFrom = function(d){
-    var crit = (d.stats && d.stats.criticalIncidents && d.stats.criticalIncidents.value) || 0;
-    var act = (d.summary && d.summary.activeIncidents) || 0;
-    if (crit >= 6 || act >= 20) return 'critique';
-    if (crit >= 3) return 'eleve';
-    if (crit >= 1 || act >= 5) return 'modere';
-    return 'faible';
-  };
   var worstKey = function(w){
     if (w >= 4) return 'critique';
     if (w >= 3) return 'eleve';
@@ -299,10 +264,6 @@
   }
 
   function apply(d){
-    var lvl = threatLevelFrom(d);
-    var badge = document.getElementById('tlBadge');
-    badge.dataset.level = lvl;
-    document.getElementById('tlVal').textContent = TL_LBL[lvl];
     renderDepts(d.coverage || [], true);
   }
 
