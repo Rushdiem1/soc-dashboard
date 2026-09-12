@@ -627,6 +627,7 @@
   .d-map .world{fill:#101c16; stroke:var(--green); stroke-width:.4; stroke-opacity:.35;}
   .d-map .country{fill:#173425; stroke:var(--green); stroke-width:1.6; stroke-opacity:.9; filter:drop-shadow(0 0 4px rgba(46,214,132,.35));}
   .d-map .countrylbl{fill:var(--text); font-family:var(--mono); font-size:11px; letter-spacing:1.5px; opacity:.85;}
+  .d-map .worldlbl{fill:var(--muted-2); font-family:var(--mono); font-size:6.5px; opacity:.55; pointer-events:none;}
   .d-map .arc{fill:none; stroke-width:1; opacity:.5; stroke-dasharray:4 6; animation:arcmove 2.4s linear infinite;}
   .d-map .arc.sev-Critical{stroke:var(--sev-critical); opacity:.85; stroke-width:1.4; filter:drop-shadow(0 0 3px var(--sev-critical));}
   .d-map .arc.sev-High{stroke:var(--sev-high); opacity:.75; filter:drop-shadow(0 0 2px var(--sev-high));}
@@ -1979,6 +1980,42 @@
       { n: 'Brésil', x: 358.3, y: 277.8 },
       { n: 'Iran', x: 647.2, y: 161.1 },
     ];
+    // additional country-name labels for the world background (no arcs; context only)
+    const WORLD_LABELS = [
+      { n: 'Canada', x: 227.4, y: 79.3 },
+      { n: 'Indonésie', x: 826.2, y: 256.2 },
+      { n: 'Argentine', x: 319.0, y: 348.5 },
+      { n: 'RD Congo', x: 565.5, y: 257.9 },
+      { n: 'Kenya', x: 605.0, y: 248.3 },
+      { n: 'Soudan', x: 583.0, y: 205.6 },
+      { n: 'Afrique du Sud', x: 569.6, y: 330.4 },
+      { n: 'Mexique', x: 215.1, y: 183.5 },
+      { n: 'Pérou', x: 293.4, y: 275.5 },
+      { n: 'Colombie', x: 297.0, y: 239.1 },
+      { n: 'Venezuela', x: 316.2, y: 230.1 },
+      { n: 'France', x: 492.0, y: 132.1 },
+      { n: 'Cameroun', x: 535.0, y: 234.3 },
+      { n: 'Ghana', x: 496.6, y: 228.0 },
+      { n: 'Rép. centrafricaine', x: 556.6, y: 231.8 },
+      { n: 'Gabon', x: 532.5, y: 251.8 },
+      { n: 'Angola', x: 548.5, y: 284.0 },
+      { n: 'Algérie', x: 507.2, y: 171.7 },
+      { n: 'Corée du Sud', x: 855.1, y: 148.8 },
+      { n: 'Pakistan', x: 692.8, y: 166.7 },
+      { n: 'Pologne', x: 553.6, y: 105.1 },
+      { n: 'Allemagne', x: 528.6, y: 108.0 },
+      { n: 'Turquie', x: 597.5, y: 141.5 },
+      { n: 'Espagne', x: 490.0, y: 137.9 },
+      { n: 'Australie', x: 873.6, y: 321.5 },
+      { n: 'Italie', x: 533.7, y: 131.2 },
+      { n: 'Royaume-Uni', x: 492.1, y: 100.2 },
+      { n: 'Japon', x: 883.5, y: 145.4 },
+      { n: 'Arabie saoudite', x: 623.7, y: 183.0 },
+      { n: 'Maroc', x: 476.6, y: 167.0 },
+      { n: 'Égypte', x: 582.9, y: 176.4 },
+      { n: 'Libye', x: 549.9, y: 175.0 },
+      { n: 'Éthiopie', x: 609.9, y: 226.0 },
+    ];
     const cityByName = (nm) => CITIES.find((c) => c.n === nm);
 
     function renderMap(list, d) {
@@ -2030,6 +2067,7 @@
         const lx = o.x > 500 ? o.x - 5 : o.x + 5;
         return `<circle class="origin" cx="${o.x}" cy="${o.y}" r="2.6"/><text class="originlbl" x="${lx}" y="${o.y - 5}" text-anchor="${anchor}">${o.n}</text>`;
       }).join('');
+      const worldLabels = WORLD_LABELS.map((o) => `<text class="worldlbl" x="${o.x}" y="${o.y}" text-anchor="middle">${o.n}</text>`).join('');
       const cityNodes = CITIES.map((c) => {
         const sel = c.n === state.city;
         const r = c.cap ? 3.4 : 2.4;
@@ -2043,6 +2081,7 @@
         + `<path class="world" d="${WORLD}"/>`
         + `<path class="country" d="${COUNTRY}"/>`
         + `<text class="countrylbl" x="${CONGO_CENTER.x}" y="${CONGO_CENTER.y - 126}" text-anchor="middle">CONGO</text>`
+        + worldLabels
         + arcs.join('') + pkts.join('') + origins + cityNodes
         + `</svg>`;
       renderMapStats(d, byCity);
